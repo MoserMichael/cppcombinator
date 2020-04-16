@@ -1,5 +1,0 @@
-#!/bin/bash
-
-gcc -g -std=c++17 test_stream.cpp -lstdc++ -lgtest -lpthread
- 
-echo "build done*"

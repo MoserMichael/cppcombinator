@@ -7,10 +7,47 @@
 #include <variant>
 #include "parsedef.h"
 #include "dhelper.h"
-
+#include <iostream>
 
 namespace pparse {
 
+
+#ifdef __PARSER_ANALYSE_
+struct CycleDetectorHelper {
+
+	struct Frame {
+		type_info *info_;
+		std::string typename_;
+		int subterm_;
+	};
+
+	using FrameList = std::list<Frame>;
+
+	void push(std::ostream &out, type_info *typid, int subterm ) {
+
+			for(auto pos=stack_.rbegin(); pos != stack_.rend(); ++pos) { 
+					Frame &frame = *pos;
+					if (typid == frame.info_) { 
+							// cycle detected.
+							out << "cycle detected: \n";
+							for(auto pos = FrameList::iterator(pos); pos != stack_.end(); ++pos ) {
+	
+							}
+
+					}
+			}
+			stack_.push_back( Frame{ typid, subterm } );
+	}
+
+	void pop() {
+
+			stack_.pop_back(); 
+
+	}
+
+	FrameList stack_;
+};
+#endif
 
 struct ParserBase {
 
@@ -43,6 +80,18 @@ struct ParserBase {
 		static inline bool backtrack(ParserBase &parser, Text_position pos) {
 				return  ParserBase::backtrack(parser, pos);
 		}
+
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			ERROR("shouldn't get here");	
+			return true;
+		}
+
+		static inline can_accept_empty_input() {
+			ERROR("shouldn't get here");	
+			return false;
+		}
+#endif
 
 		//virtual ~ParserBase() {}
 };
@@ -113,6 +162,18 @@ struct PEof : ParserBase  {
 				ParserBase::backtrack(base, start_pos);
 				return Parse_result{false, Position(end_pos), Position(end_pos) };
 		}
+
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			return true;
+		}
+
+		static inline can_accept_empty_input() {
+			return false;
+		}
+#endif		
+
+		
 };
 
 //
@@ -196,6 +257,16 @@ struct PTok : ParserBase  {
 				return Parse_result{true, Position(token_start_pos), Position(end_pos), std::make_unique<AstType>() };
 		}
 
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			return true;
+		}
+
+		static inline can_accept_empty_input() {
+			return false;
+		}
+#endif		
+
 
 private:
 		template<typename ParserBase, Char_t ch, Char_t ...Css>
@@ -229,7 +300,7 @@ enum class Char_checker_result {
 typedef Char_checker_result (PTokVar_cb_t) (Char_t current_char, bool iseof, Char_t *matched_so_far);
 
 
-template<RuleId ruleId, PTokVar_cb_t checker>
+template<RuleId ruleId, PTokVar_cb_t checker, bool canAcceptEmptyInput = false>
 struct PTokVar : ParserBase  { 
 		
 		const RuleId RULE_ID = ruleId;
@@ -300,6 +371,18 @@ struct PTokVar : ParserBase  {
 
 				return Parse_result{false, token_start_pos, token_start_pos};
 		}
+
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			return true;
+		}
+
+		static inline can_accept_empty_input() {
+			return  canAcceptEmptyInput;
+		}
+#endif		
+
+
 };
 
 inline Char_checker_result pparse_is_digit(Char_t current_char, bool iseof, Char_t *matched_so_far) {
@@ -399,6 +482,16 @@ struct PAny : ParserBase  {
 		return res;
 	}
 
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			return validate_no_cycles_helper<0, Types...>(CycleDetectorHelper &helper, std::ostream &out);
+		}
+
+		static inline can_accept_empty_input() {
+			return can_accept_empty_input_helper<Types...>();
+		}
+#endif		
+
 
 private:
     template<size_t FieldIndex, typename ParserBase, typename PType, typename ...PTypes>
@@ -428,6 +521,34 @@ private:
 		}         
 		return Parse_result{false, error_pos, error_pos};
     }
+
+
+#ifdef __PARSER_ANALYSE_
+
+		template<size_t FieldIndex, typename ParserBase, typename PType, typename ...PTypes>
+		static inline bool validate_no_cycles_helper(CycleDetectorHelper &helper, std::ostream &out) {
+
+			bool ret = 	PType::validate_no_cyles(helper, out);
+
+			ret = ret && validate_no_cycles_helper<FieldIndex+1,PTypes...>(helper, out);
+					
+			return ret;
+		}
+
+		template<typename PType, typename ...PTypes>
+		static inline can_accept_empty_input_helper() {
+
+			if (PType::can_accept_empty_input()) {
+				return true;
+			}
+
+			if constexpr(sizeof ...(PTypes) > 0) {
+				return can_accept_empty_input_helper<PTypes...>()
+			}
+			return false;
+		}
+#endif		
+
 
 };
 
@@ -488,6 +609,21 @@ struct POpt : ParserBase  {
 
 		return res;
 	}
+
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			if constexpr (minOccurance  == 0) {
+				return true;
+			}
+			return Type::validate_no_cycles(elper, out) ;
+		}
+
+		static inline can_accept_empty_input() {
+			return true;
+		}
+#endif		
+
+
 };
 
 //
@@ -542,6 +678,16 @@ struct PSeq : ParserBase  {
         return res;
     }
 
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			return validate_no_cycles_helper<0, Types...>(CycleDetectorHelper &helper, std::ostream &out);
+		}
+
+		static inline can_accept_empty_input() {
+			return can_accept_empty_input_helper<Types...>();
+		}
+#endif		
+
 
 private:
     template<size_t FieldIndex, typename ParserBase, typename PType, typename ...PTypes>
@@ -571,6 +717,35 @@ private:
 
 		return Parse_result{true, start_seq, res.end_};
     }
+
+
+#ifdef __PARSER_ANALYSE_
+
+		template<size_t FieldIndex, typename ParserBase, typename PType, typename ...PTypes>
+		static inline bool validate_no_cycles_helper(CycleDetectorHelper &helper, std::ostream &out) {
+
+			bool ret = 	PType::validate_no_cyles(helper, out);
+
+			if (PType::can_accept_empty_input()) {
+
+				ret = ret && validate_no_cycles_helper<FieldIndex+1,PTypes...>(helper, out);
+			}
+					
+			return ret;
+		}
+
+		template<typename PType, typename ...PTypes>
+		static inline can_accept_empty_input_helper() {
+
+			if (PType::can_accept_empty_input()) {
+				if constexpr(sizeof ...(PTypes) > 0) {
+					return can_accept_empty_input_helper<PTypes...>()
+			}
+			return true;
+		}
+#endif		
+
+	
 };
 
 
@@ -580,6 +755,8 @@ private:
 
 template<RuleId ruleId, typename Type, int minOccurance = 0, int maxOccurance = 0>
 struct PRepeat : ParserBase {
+
+    using ThisClass = PRepeat<ruleId, Type>;
 
 	const RuleId RULE_ID = ruleId;
 	
@@ -610,11 +787,23 @@ private:
 
 		Text_position start_pos = ParserBase::current_pos(base);
 
+#ifdef __PARSER_TRACE__
+		std::string short_name = VisualizeTrace<ThisClass>::trace_start_parsing(start_pos);
+#endif
+
+
+
 		for(int i = 0; i < minOccurance; ++i) {
 			Parse_result res = Type::parse(base);
 			if (!res.success_) {
 				ParserBase::backtrack(base, start_pos);
 				Text_position end_pos = ParserBase::current_pos(base);
+
+#ifdef __PARSER_TRACE__
+				VisualizeTrace<ThisClass>::end_parsing(short_name, res.success_, ParserBase::current_pos(base));
+#endif
+
+
 				return res;
 			}
 			if (ast != nullptr) {
@@ -638,13 +827,29 @@ private:
 		}
 		Text_position end_pos = ParserBase::current_pos(base);
 
+#ifdef __PARSER_TRACE__
+		VisualizeTrace<ThisClass>::end_parsing(short_name, true, ParserBase::current_pos(base));
+#endif
+
 		if (ast != nullptr) {
 			return Parse_result{true, Position(start_pos), Position(end_pos), std::unique_ptr<AstEntryBase>(ast->release()) };
 		}
-
 		return Parse_result{true, Position(start_pos), Position(end_pos) };
 	}
 	
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			if constexpr (minOccurance  == 0) {
+				return true;
+			}
+			return Type::validate_no_cycles(elper, out) ;
+		}
+
+		static inline can_accept_empty_input() {
+			return Type::can_accept_empty_input();
+		}
+#endif		
+
 };
 
 //
@@ -707,6 +912,18 @@ struct PWithAndLookaheadImpl : ParserBase {
 
 		return res;
   	}
+
+#ifdef __PARSER_ANALYSE_
+		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+			return Type::validate_no_cycles(elper, out) ;
+		}
+
+		static inline can_accept_empty_input() {
+			return Type::can_accept_empty_input();
+		}
+#endif
+
+	
 };
 
 

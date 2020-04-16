@@ -142,6 +142,9 @@ std::string method(const demangled_string& cls, const char* method)
 }
 
 const int PREFIX_NSPACE_LEN = 8;
+const char *CHAR_SYM="(char)";
+const int CHAR_SYM_LEN=6;
+
 
 static inline size_t __thread nesting_ = 0;
 
@@ -194,11 +197,11 @@ private:
 			size_t pos = 0;
 			std::string cname = demangle<Type>();
 			while(pos < cname.size()) {
-				size_t next_pos = cname.find( "(char)", pos);
+				size_t next_pos = cname.find( CHAR_SYM, pos);
 				if (next_pos == std::string::npos) {
 					break;
 				}
-				next_pos += 6;
+				next_pos += CHAR_SYM_LEN;
 
 				size_t eof_pos = cname.find( ' ', next_pos);
 				if (eof_pos == std::string::npos) {
