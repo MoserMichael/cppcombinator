@@ -1,9 +1,40 @@
 #include "gtest/gtest.h"
+
+#define  __PARSER_TRACE__
 #include "parse.h"
+
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <string.h>
 
 namespace {
+
+
+using namespace pparse;
+
+template<typename Parser>
+Parse_result test_string(Char_t *test_string) {
+	Text_stream text_stream;
+	
+	bool isok = text_stream.open(-1);
+	EXPECT_EQ(isok, true);
+
+	isok = text_stream.write_tail(test_string, strlen(test_string) );
+	EXPECT_EQ(isok, true);
+
+
+	CharParser chparser(text_stream);
+	
+	Parse_result res = Parser::parse(chparser);
+	
+	if (!res.success()) {
+		printf("Error: parser error at: line: %d column: %d text: %s\n", res.get_start_pos().line(), res.get_start_pos().column(), test_string);
+	}
+
+	return res;
+
+}
+
 
 TEST(TextStream,readCharsOneBufWithoutResize) {
 	FILE *fp = fopen(__FILE__,"r");
@@ -13,7 +44,7 @@ TEST(TextStream,readCharsOneBufWithoutResize) {
 	long file_size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	pparse::Text_stream stream(false);
+	Text_stream stream(false);
 	
 	bool isok = stream.open(__FILE__, (uint32_t) file_size+2);
 	EXPECT_EQ(isok, true);
@@ -24,9 +55,9 @@ TEST(TextStream,readCharsOneBufWithoutResize) {
 				ASSERT_TRUE( pos == file_size );
 			}
 
-			pparse::Text_stream::Next_char_value nch = stream.next_char();
+			Text_stream::Next_char_value nch = stream.next_char();
 			if (!nch.first) {
-				printf("pos %ld size %ld\n",pos, file_size);
+				//printf("pos %ld size %ld\n",pos, file_size);
 				ASSERT_TRUE( pos == file_size );
 				ASSERT_TRUE( stream.error() == 0 );
 				break;
@@ -57,7 +88,7 @@ TEST(TextStream,readCharsOneBufWithResize) {
 	long file_size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	pparse::Text_stream stream;
+	Text_stream stream;
 	
 	bool isok = stream.open(__FILE__, (uint32_t) file_size+2);
 	EXPECT_EQ(isok, true);
@@ -68,9 +99,9 @@ TEST(TextStream,readCharsOneBufWithResize) {
 				ASSERT_TRUE( pos == file_size );
 			}
 
-			pparse::Text_stream::Next_char_value nch = stream.next_char();
+			Text_stream::Next_char_value nch = stream.next_char();
 			if (!nch.first) {
-				printf("pos %ld size %ld\n",pos, file_size);
+				//printf("pos %ld size %ld\n",pos, file_size);
 				ASSERT_TRUE( pos == file_size );
 				ASSERT_TRUE( stream.error() == 0 );
 				break;
@@ -102,7 +133,7 @@ TEST(TextStream,readCharsLimitedBuffer) {
 	long file_size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	pparse::Text_stream stream;
+	Text_stream stream;
 	
 	bool isok = stream.open(__FILE__, 11);
 	EXPECT_EQ(isok, true);
@@ -119,9 +150,9 @@ TEST(TextStream,readCharsLimitedBuffer) {
 				ASSERT_TRUE( isok );
 			}
 
-			pparse::Text_stream::Next_char_value nch = stream.next_char();
+			Text_stream::Next_char_value nch = stream.next_char();
 			if (!nch.first) {
-				printf("pos %ld size %ld tch %x ch %x\n", pos, file_size, nch.second, ch);
+				//printf("pos %ld size %ld tch %x ch %x\n", pos, file_size, nch.second, ch);
 				ASSERT_TRUE( pos == file_size );
 				ASSERT_TRUE( stream.error() == 0 );
 				break;
@@ -147,17 +178,17 @@ TEST(TextStream,readCharsLimitedBuffer) {
 }
 
 TEST(TextStream,writeTest) {
-	pparse::Text_stream stream;
+	Text_stream stream;
   
 	bool isok = stream.open(-1,11);
 	EXPECT_EQ(isok, true);
 
-	isok = stream.write_tail((pparse::Char_t*)"12345", 5);
+	isok = stream.write_tail((Char_t*)"12345", 5);
 	EXPECT_EQ(isok, true);
 
 	long pos=0;
 	for(; ; ++pos) {
-			pparse::Text_stream::Next_char_value nch = stream.next_char();
+			Text_stream::Next_char_value nch = stream.next_char();
 			if (!nch.first) {
 				break;
 			}
@@ -168,11 +199,11 @@ TEST(TextStream,writeTest) {
 	isok = stream.move_on( stream.pos_at_cursor() );
 	EXPECT_EQ(isok, true);
 
-	isok = stream.write_tail((pparse::Char_t*)"6789012345", 10);
+	isok = stream.write_tail((Char_t*)"6789012345", 10);
 	EXPECT_EQ(isok, true);
 
 	for(; ; ++pos) {
-			pparse::Text_stream::Next_char_value nch = stream.next_char();
+			Text_stream::Next_char_value nch = stream.next_char();
 			if (!nch.first) {
 				break;
 			}
@@ -186,51 +217,110 @@ TEST(TextStream,writeTest) {
  
 }
  
-TEST(Parser,testTokenParser) {
+TEST(TestRules,testIntParser) {
  
-	pparse::Text_stream text_stream;
+	using TokenIntParser = PTokInt<1>;
+
+	auto result = test_string<TokenIntParser>((Char_t *) " \t12934 " );
+	EXPECT_TRUE(result.success());
+
+	//printf("resul pos: start(line: %d col: %d) end(line: %d col: %d)\n", result.start_.line_, result.start_.column_, result.end_.line_, result.end_.column_ );
+	
+	EXPECT_TRUE(result.start_ == Position(1,2));
+	EXPECT_TRUE(result.end_ ==  Position(1,6));
+	EXPECT_TRUE(result.get_ast()->getRuleId() ==  1);
+
+	TokenIntParser::AstType *type = (TokenIntParser::AstType *) result.get_ast();
+	//printf("res: [%s]\n", type->entry_.c_str());
+	EXPECT_TRUE(type->entry_ == "12934");
+
+
+	result = test_string<TokenIntParser>((Char_t *) " \t12934" );
+	EXPECT_TRUE(result.success());
+
+	//printf("resul pos: start(line: %d col: %d) end(line: %d col: %d)\n", result.start_.line_, result.start_.column_, result.end_.line_, result.end_.column_ );
+	
+	EXPECT_TRUE(result.start_ == Position(1,2));
+	EXPECT_TRUE(result.end_ ==  Position(1,6));
+	EXPECT_TRUE(result.get_ast()->getRuleId() ==  1);
+
+	type = (TokenIntParser::AstType *) result.get_ast();
+	//printf("res: [%s]\n", type->entry_.c_str());
+	EXPECT_TRUE(type->entry_ == "12934");
+
+
+}
+
+
+TEST(TestRules,testAnyCharParser) {
+ 
+
+	using TokenCharParser = PTokChar<1>;
+
+	auto result = test_string<TokenCharParser>((Char_t *) " \tfFd" );
+	EXPECT_TRUE(result.success());
+
+
+	//printf("resul pos: start(line: %d col: %d) end(line: %d col: %d)\n", result.start_.line_, result.start_.column_, result.end_.line_, result.end_.column_ );
+	
+	EXPECT_TRUE(result.start_ == Position(1,2));
+	EXPECT_TRUE(result.end_ ==  Position(1,2));
+	EXPECT_TRUE(result.get_ast()->getRuleId() ==  1);
+
+	TokenCharParser::AstType *type = (TokenCharParser::AstType *) result.get_ast();
+
+	//printf("res: %s\n", type->entry_.c_str());
+	
+	EXPECT_TRUE(type->entry_ == "f");
+
+}
+
+
+TEST(TestRules,testTokenParser) {
+ 
+	Text_stream text_stream;
   
 	bool isok = text_stream.open(-1,11);
 	EXPECT_EQ(isok, true);
 
-	isok = text_stream.write_tail((pparse::Char_t*)" \tif " , 5);
+	isok = text_stream.write_tail((Char_t*)" \tif " , 5);
 
-	pparse::CharParser chparser(text_stream);
+	CharParser chparser(text_stream);
 	
-	using TokenIfParser = pparse::PTok<0, CSTR2("if")>;
+	using TokenIfParser = PTok<0, CSTR2("if")>;
 
 	auto result = TokenIfParser::parse( chparser );
 	EXPECT_TRUE(result.success());
 
 	//printf("resul pos: start(line: %d col: %d) end(line: %d col: %d)\n", result.start_.line_, result.start_.column_, result.end_.line_, result.end_.column_ );
 	
-	EXPECT_TRUE(result.start_ == pparse::Position(1,2));
-	EXPECT_TRUE(result.end_ ==  pparse::Position(1,3));
+	EXPECT_TRUE(result.start_ == Position(1,2));
+	EXPECT_TRUE(result.end_ ==  Position(1,3));
 }
 
-TEST(Parser,testAnyParser) {
+TEST(TestRules,testAnyParser) {
 
-	pparse::Text_stream text_stream;
+	Text_stream text_stream;
   
 	bool isok = text_stream.open(-1,11);
 	EXPECT_EQ(isok, true);
 
-	isok = text_stream.write_tail((pparse::Char_t*)" \telse" , 7);
+	isok = text_stream.write_tail((Char_t*)" \telse" , 7);
 
-	using TokenIfParser = pparse::PTok<1, CSTR2("if")>;
+	using TokenIfParser = PTok<1, CSTR2("if")>;
 
-	using TokenThenParser = pparse::PTok<2, CSTR4("then")>;
+	using TokenThenParser = PTok<2, CSTR4("then")>;
 
-	using TokenElseParser = pparse::PTok<3, CSTR4("else")>;
+	using TokenElseParser = PTok<3, CSTR4("else")>;
 
-	using TokenKeywdParser = pparse::PAny<4, TokenIfParser, TokenElseParser, TokenThenParser>;
+	using TokenKeywdParser = PAny<4, TokenIfParser, TokenElseParser, TokenThenParser>;
 
-	pparse::CharParser chparser(text_stream);
+	CharParser chparser(text_stream);
 	
 	auto result = TokenKeywdParser::parse( chparser );
 	EXPECT_TRUE(result.success());
 
-	pparse::AstEntryBase *res = result.ast_.get();
+	AstEntryBase *res = result.ast_.get();
 	EXPECT_TRUE( res != nullptr );
 	EXPECT_TRUE( res->ruleId_ == 4 );
 
@@ -240,30 +330,50 @@ TEST(Parser,testAnyParser) {
 	EXPECT_TRUE( std::get<1>(anyAst->entry_).get()->ruleId_ == 3);
 }
 
-TEST(Parser,testSeqParser) {
+TEST(TestRules,testOptParser) {
 
-	pparse::Text_stream text_stream;
+	using TokenIfParser = POpt<2, PTok<1, CSTR2("if")> >;
+	
+	Parse_result result = test_string<TokenIfParser>((Char_t *) "\t  if\n");
+	EXPECT_TRUE(result.success());
+
+	TokenIfParser::AstType *ifAst = (TokenIfParser::AstType *) result.ast_.get();
+	EXPECT_TRUE(ifAst->entry_.has_value());
+
+
+	result = test_string<TokenIfParser>((Char_t *) "\t  else\n");
+	EXPECT_TRUE(result.success());
+
+	ifAst = (TokenIfParser::AstType *) result.ast_.get();
+	EXPECT_FALSE(ifAst->entry_.has_value());
+
+
+}
+
+TEST(TestRules,testSeqParser) {
+
+	Text_stream text_stream;
   
 	bool isok = text_stream.open(-1,11);
 	EXPECT_EQ(isok, true);
 
-	const pparse::Char_t *str = " \tif then else"; 
+	const Char_t *str = " \tif then else"; 
 	isok = text_stream.write_tail(str, strlen(str));
 
-	using TokenIfParser = pparse::PTok<1, CSTR2("if")>;
+	using TokenIfParser = PTok<1, CSTR2("if")>;
 
-	using TokenThenParser = pparse::PTok<2, CSTR4("then")>;
+	using TokenThenParser = PTok<2, CSTR4("then")>;
 
-	using TokenElseParser = pparse::PTok<3, CSTR4("else")>;
+	using TokenElseParser = PTok<3, CSTR4("else")>;
 
-	using TokenKeywdParser = pparse::PSeq<4, TokenIfParser, TokenThenParser, TokenElseParser>;
+	using TokenKeywdParser = PSeq<4, TokenIfParser, TokenThenParser, TokenElseParser>;
 
-	pparse::CharParser chparser(text_stream);
+	CharParser chparser(text_stream);
 	
 	auto result = TokenKeywdParser::parse( chparser );
 	EXPECT_TRUE(result.success());
 
-	pparse::AstEntryBase *res = result.ast_.get();
+	AstEntryBase *res = result.ast_.get();
 	EXPECT_TRUE( res != nullptr );
 	EXPECT_TRUE( res->ruleId_ == 4 );
 
@@ -280,32 +390,32 @@ TEST(Parser,testSeqParser) {
 	//EXPECT_TRUE( std::get<1>(anyAst->entry_).ruleId_ == 2);
 }
 
-TEST(Parser,testStarParser) {
+TEST(TestRules,testStarParser) {
 
-	pparse::Text_stream text_stream;
+	Text_stream text_stream;
 	
 	bool isok = text_stream.open(-1,11);
 	EXPECT_EQ(isok, true);
 
-	const pparse::Char_t *str = " \tAA A\nA A\tAA"; 
+	const Char_t *str = " \tAA A\nA A\tAA"; 
 	isok = text_stream.write_tail(str, strlen(str));
 
-	using TokenAParser = pparse::PTok<1, CSTR1("A")>;
+	using TokenAParser = PTok<1, CSTR1("A")>;
 
-	using TokenStarParser = pparse::PStar<4, TokenAParser>;
+	using TokenStarParser = PStar<4, TokenAParser>;
 
 
-	pparse::CharParser chparser(text_stream);
+	CharParser chparser(text_stream);
 	
 	auto result = TokenStarParser::parse( chparser );
 	EXPECT_TRUE(result.success());
 
-	pparse::AstEntryBase *res = result.ast_.get();
+	AstEntryBase *res = result.ast_.get();
 	EXPECT_TRUE( res != nullptr );
 
 	EXPECT_TRUE( res->ruleId_ == 4 );
 
-	TokenStarParser::AstType *star = (TokenStarParser::AstType *) res;
+			TokenStarParser::AstType *star = (TokenStarParser::AstType *) res;
 	
 	for(auto &entry : star->entry_) {
 
@@ -315,25 +425,25 @@ TEST(Parser,testStarParser) {
 	EXPECT_TRUE( star->entry_.size() == 7 );
 }
 
-TEST(Parser,testWithAndParser) {
+TEST(TestRules,testWithAndParser) {
 
-	pparse::Text_stream text_stream;
+	Text_stream text_stream;
 	
 	bool isok = text_stream.open(-1,11);
 	EXPECT_EQ(isok, true);
 
-	const pparse::Char_t *str = " \t if then"; 
+	const Char_t *str = " \t if then"; 
 	isok = text_stream.write_tail(str, strlen(str));
 
-	using TokenIfParser = pparse::PTok<1, CSTR2("if")>;
-	using TokenThenParser = pparse::PTok<2, CSTR4("then")>;
-	using TokenElseParser = pparse::PTok<3, CSTR4("else")>;
+	using TokenIfParser = PTok<1, CSTR2("if")>;
+	using TokenThenParser = PTok<2, CSTR4("then")>;
+	using TokenElseParser = PTok<3, CSTR4("else")>;
 
 
-	using TokenWithAndParser1 = pparse::PWithAndLookahead<TokenIfParser, TokenThenParser>;
-	using TokenWithAndParser2 = pparse::PWithAndLookahead<TokenIfParser, TokenElseParser>;
+	using TokenWithAndParser1 = PWithAndLookahead<TokenIfParser, TokenThenParser>;
+	using TokenWithAndParser2 = PWithAndLookahead<TokenIfParser, TokenElseParser>;
 
-	pparse::CharParser chparser(text_stream);
+	CharParser chparser(text_stream);
 
 	auto result2 = TokenWithAndParser2::parse( chparser );
 	EXPECT_FALSE(result2.success());
@@ -341,12 +451,115 @@ TEST(Parser,testWithAndParser) {
 	auto result1 = TokenWithAndParser1::parse( chparser );
 	EXPECT_TRUE(result1.success());
 
-	pparse::AstEntryBase *res = result1.ast_.get();
+	AstEntryBase *res = result1.ast_.get();
 	EXPECT_TRUE( res != nullptr );
 
 	TokenWithAndParser1::AstType *ptype  = (TokenWithAndParser1::AstType *) res; 
 	EXPECT_TRUE( res->ruleId_ == 1 );
 }
+
+
+
+TEST(TestGrammar, testRecursion) {
+
+	struct Int : PTokInt<1> {};
+
+	struct Expr;
+
+	struct Mult : PAny<2, PTok<3,CSTR1("*")>, PTok<4,CSTR1("/")> > {};
+
+	struct Add : PAny<5, PTok<6,CSTR1("+")>, PTok<7,CSTR1("-")> > {};
+
+	struct NestedExpr : PSeq<8, PTok<0, CSTR1("(")>, Expr, PTok<0, CSTR1(")")> > {};
+
+	struct NegativeInt : PSeq<1, PTok<11, CSTR1("-")>, Int> {};
+
+	struct SimpleExpr : PAny<6, Int, NegativeInt, NestedExpr> {}; // 
+
+	struct MultExpr;
+
+	struct MultExpr: PAny<7, PSeq<6, SimpleExpr, Mult, MultExpr >, SimpleExpr> {};
+
+	struct Expr;
+
+	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {};
+	
+	struct ExprEof : PSeq<8, Expr, PEof> {};
+
+	Parse_result result = test_string<ExprEof>((Char_t *) "-1");
+	EXPECT_TRUE(result.success());
+
+	result = test_string<ExprEof>((Char_t *) "1 * 3");
+	EXPECT_TRUE(result.success());
+
+	result = test_string<ExprEof>((Char_t *) "2 + 2 + 2");
+	EXPECT_TRUE(result.success());
+
+	result = test_string<ExprEof>((Char_t *) "2 + 2 + 2 + 1 * 3");
+	EXPECT_TRUE(result.success());
+
+	result = test_string<ExprEof>((Char_t *) "(2*3) + 5");
+	EXPECT_TRUE(result.success());
+}
+
+inline Char_checker_result pparse_regex_char(Char_t current_char, bool iseof, Char_t *matched_so_far) {
+	return !iseof && 
+			strlen(matched_so_far) == 0  && 
+			isprint((char) current_char) && 
+			strchr("+-*()[].",current_char) == 0 ? Char_checker_result::acceptNow : Char_checker_result::error;
+}
+
+template<RuleId ruleId>
+struct PTokRegexChar : PTokVar<ruleId, pparse_regex_char>  { 
+};
+
+TEST(TestGrammar, testRegEx) {
+
+	struct Regex;
+
+	struct RegexAnyChar : PTok<1, CSTR1(".") > {};
+
+	struct RegexEscapeChar : PSeq<1, PTok<0,CSTR1("\\")>, PTokChar<1>> {};
+
+	struct RegexCharRangeChar : PAny<1, RegexEscapeChar, PTokRegexChar<1> >  {};
+
+	struct RegexCharRange : PSeq<1, RegexCharRangeChar, PTok<1, CSTR1("-")>, RegexCharRangeChar> {};
+
+	struct RegexSetItems : PPlus<1, PAny<1, RegexCharRange, RegexAnyChar> > {};
+
+	struct RegexSet : PSeq<1, PTok<0, CSTR1("[")>, RegexSetItems, PTok<0, CSTR1("]")> > {};
+
+	struct RegexOp : PAny<1, PTok<1, CSTR1("*")>, PTok<2, CSTR1("?")>, PTok<3, CSTR1("+") > > {};
+
+	struct RegexSetWithOp : PSeq<1, RegexSet , POpt<1, RegexOp>> {};
+
+	struct RegexNestedWithOp : PSeq<1, PTok<1,CSTR1("(")>, Regex, PTok<1, CSTR1(")")>, POpt<1, RegexOp> > {};
+
+	struct RegexSetItemWithOp : PSeq<1, PAny<1, RegexCharRange, RegexAnyChar, RegexCharRangeChar>, POpt<1, RegexOp> > {};
+
+	struct Regex : PSeq<1, PAny< 1, RegexSetWithOp, RegexNestedWithOp, RegexSetItemWithOp> > {};
+
+	struct RegexEof : PSeq<8, Regex, PEof> {};
+
+	Parse_result result = test_string<RegexEof>((Char_t *) "ab");
+	EXPECT_TRUE(result.success());
+
+	result = test_string<RegexEof>((Char_t *) "abc123");
+	EXPECT_TRUE(result.success());
+
+	result = test_string<RegexEof>((Char_t *) "[a-z]" );
+	EXPECT_TRUE(result.success());
+
+#if 0
+	result = test_string<RegexEof>((Char_t *) "123a[a-z123]+" );
+	EXPECT_TRUE(result.success());
+
+	result = test_string<RegexEof>((Char_t *) "abc([0-9]+)?" );
+	EXPECT_TRUE(result.success());
+#endif
+
+}
+
 
 } // namespace
 

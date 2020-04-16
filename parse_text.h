@@ -210,7 +210,7 @@ public:
         return true;
     }
 
-    bool open(int fd, uint32_t buf_size) {
+    bool open(int fd, uint32_t buf_size = Default_buf_size ) {
         fd_ = fd;
         if (!buf_.init(buf_size)) {
             ERROR("Can't allocate buffer error %d\n", errno);
