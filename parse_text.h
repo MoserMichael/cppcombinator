@@ -331,8 +331,12 @@ public:
         return rval; 
     }
 
-    Text_position pos_at_cursor() const {
+    Text_position pos_at_cursor_and_inc_nesting() {
 		position_nesting_ += 1;
+        return pos_at_cursor_;
+    }
+
+    Text_position pos_at_cursor() const {
         return pos_at_cursor_;
     }
 
@@ -343,18 +347,21 @@ public:
         }
         pos_at_cursor_ = pos;
         buf_.set_cursor( pos_at_cursor_.buffer_pos_ );
-		if (position_nesting_ == 0) {
-			ERROR("position nesting droppes to negative count. parser is wrong\n");
-		}
+
 		dec_position_nesting();
         return true;
     }
 
-	void dec_position_nesting() {
+	bool dec_position_nesting() {
 		if (position_nesting_ == 0) {
 			ERROR("position nesting droppes to negative count. parser is wrong\n");
+			return false;
 		}
 		position_nesting_ -= 1;
+		if (position_nesting_ == 0) {
+			return move_on( pos_at_cursor() ); 
+		}
+		return true;
 	}
 
 	// discard all text up until the argument position
@@ -455,7 +462,7 @@ private:
 	bool resize_if_full_;
     Text_position  pos_at_cursor_;
     Text_ringbuffer buf_; 
-	mutable int position_nesting_;
+	int position_nesting_;
 };
 
 } // namespace pparse
