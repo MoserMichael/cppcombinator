@@ -131,8 +131,6 @@ struct CharParser : ParserBase {
 			ERROR("shouldn't get here");	
 			return false;
 		}
-
-
 #endif
 
 
@@ -479,10 +477,12 @@ struct PAny : ParserBase  {
     template<typename ParserBase>
 	static Parse_result  parse(ParserBase &base) {
 
-		Text_position start_pos = ParserBase::current_pos(base); 
+//		Text_position start_pos = ParserBase::current_pos(base); 
+
 		Position error_pos;
 
 #ifdef __PARSER_TRACE__
+		Text_position start_pos = ParserBase::current_pos(base); 
 		std::string short_name = VisualizeTrace<ThisClass>::trace_start_parsing(start_pos);
 #endif
 
@@ -490,9 +490,9 @@ struct PAny : ParserBase  {
 
 		Parse_result res = parse_helper<0,ParserBase,Types...>(base, ast.get(), error_pos); 
 
-		if (!res.success_) {
-			ParserBase::backtrack(base, start_pos);
-		} 
+//		if (!res.success_) {
+//			ParserBase::backtrack(base, start_pos);
+//		} 
 
 #ifdef __PARSER_TRACE__
 		VisualizeTrace<ThisClass>::end_parsing_choice(short_name, res.success_, ParserBase::current_pos(base), ast.get()->entry_.index());
@@ -616,9 +616,10 @@ struct POpt : ParserBase  {
     template<typename ParserBase>
 	static Parse_result  parse(ParserBase &base) {
 
-		Text_position start_pos = ParserBase::current_pos(base); 
+//		Text_position start_pos = ParserBase::current_pos(base); 
 
 #ifdef __PARSER_TRACE__
+		Text_position start_pos = ParserBase::current_pos(base); 
 		std::string short_name = VisualizeTrace<ThisClass>::trace_start_parsing(start_pos);
 #endif
 
@@ -633,8 +634,8 @@ struct POpt : ParserBase  {
 			rval->entry_ = OptionType(PTypePtr(ptr));
 		}
 		if (!res.success_) {
-			ParserBase::backtrack(base, start_pos);
-			res.end_ = res.start_ = start_pos;
+//			ParserBase::backtrack(base, start_pos);
+			res.end_ = res.start_ = res.start_;
 		} 
 
 		res.success_ = true;
@@ -959,7 +960,7 @@ struct PWithAndLookaheadImpl : ParserBase {
 		Text_position start_pos = ParserBase::current_pos(base);
 		Parse_result res = Type::parse(base);
 		if (!res.success_) {
-			ParserBase::backtrack(base, start_pos);
+//			ParserBase::backtrack(base, start_pos);
 			return res;
 		}
 
