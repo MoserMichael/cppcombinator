@@ -64,11 +64,11 @@ demangled_string demangle()
 
 // implementation
 
-demangled_string::demangled_string(ptr_type&& ptr) noexcept
+inline demangled_string::demangled_string(ptr_type&& ptr) noexcept
 : _ptr(std::move(ptr))
 {}
 
-std::ostream& demangled_string::write(std::ostream& os) const
+inline std::ostream& demangled_string::write(std::ostream& os) const
 {
     if (_ptr) {
         return os << _ptr.get();
@@ -78,7 +78,7 @@ std::ostream& demangled_string::write(std::ostream& os) const
     }
 }
 
-const char* demangled_string::c_str() const
+inline const char* demangled_string::c_str() const
 {
     if (!_ptr)
     {
@@ -89,12 +89,12 @@ const char* demangled_string::c_str() const
     }
 }
 
-demangled_string::operator std::string() const {
+inline demangled_string::operator std::string() const {
     return std::string(c_str());
 }
 
 
-demangled_string demangle(const char* name)
+inline demangled_string demangle(const char* name)
 {
     using namespace std::string_literals;
 
@@ -126,20 +126,21 @@ demangled_string demangle(const char* name)
     }
 }
 
-demangled_string demangle(const std::type_info& type)
+inline demangled_string demangle(const std::type_info& type)
 {
     return demangle(type.name());
 }
 
-demangled_string demangle(std::type_index type)
+inline demangled_string demangle(std::type_index type)
 {
     return demangle(type.name());
 }
 
-std::string method(const demangled_string& cls, const char* method)
+inline std::string method(const demangled_string& cls, const char* method)
 {
     return std::string(cls) + "::" + method;
 }
-#endif
 
 }
+
+#endif
