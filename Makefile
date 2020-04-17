@@ -2,6 +2,8 @@
 TEST_FILES=test_stream.cpp \
 		   test_rules.cpp \
 		   test_grammar.cpp \
+		   test_trace.cpp \
+		   test_analyse.cpp \
 		   test_main.cpp
 
 

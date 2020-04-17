@@ -7,47 +7,11 @@
 #include <variant>
 #include "parsedef.h"
 #include "dhelper.h"
+#include "vhelper.h"
+#include "analyse.h"
 #include <iostream>
 
 namespace pparse {
-
-
-#ifdef __PARSER_ANALYSE_
-struct CycleDetectorHelper {
-
-	struct Frame {
-		type_info *info_;
-		std::string typename_;
-		int subterm_;
-	};
-
-	using FrameList = std::list<Frame>;
-
-	void push(std::ostream &out, type_info *typid, int subterm ) {
-
-			for(auto pos=stack_.rbegin(); pos != stack_.rend(); ++pos) { 
-					Frame &frame = *pos;
-					if (typid == frame.info_) { 
-							// cycle detected.
-							out << "cycle detected: \n";
-							for(auto pos = FrameList::iterator(pos); pos != stack_.end(); ++pos ) {
-	
-							}
-
-					}
-			}
-			stack_.push_back( Frame{ typid, subterm } );
-	}
-
-	void pop() {
-
-			stack_.pop_back(); 
-
-	}
-
-	FrameList stack_;
-};
-#endif
 
 struct ParserBase {
 
@@ -81,20 +45,50 @@ struct ParserBase {
 				return  ParserBase::backtrack(parser, pos);
 		}
 
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
 			ERROR("shouldn't get here");	
 			return true;
 		}
 
-		static inline can_accept_empty_input() {
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
 			ERROR("shouldn't get here");	
 			return false;
 		}
+
 #endif
 
 		//virtual ~ParserBase() {}
 };
+
+#ifdef __PARSER_ANALYSE__
+
+template<typename Info>
+static const std::type_info &get_tinfo(Info *ptr)  {
+	return typeid(ptr);
+}
+
+
+//template<typename Grammar> 
+//struct ParserChecker {
+//	static bool check(std::ostream &stream) {
+//		CycleDetectorHelper helper;
+//		
+//		helper.push_and_check(stream, get_tinfo<Grammar>(), -1);
+//
+//		bool ret = Grammar::verify_no_cycles<void>(helper, stream);
+//
+//		helper.pop();
+//
+//		return !ret;
+//	}
+//};
+//
+#endif
+ 
+		
 
 
 struct CharParser : ParserBase {
@@ -104,6 +98,7 @@ struct CharParser : ParserBase {
 
 		CharParser(Text_stream &stream) : text_(stream) {
 		}
+
 
 		static Char_value  current_char(CharParser &parser) {
 				auto ch = parser.text_.current_char();
@@ -123,6 +118,22 @@ struct CharParser : ParserBase {
 		static inline bool backtrack(CharParser &parser, Text_position pos) {
 				return parser.text_.backtrack(pos);
 		}
+
+#ifdef __PARSER_ANALYSE_
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+			ERROR("shouldn't get here");	
+			return true;
+		}
+
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
+			ERROR("shouldn't get here");	
+			return false;
+		}
+
+
+#endif
 
 
 private:
@@ -163,14 +174,18 @@ struct PEof : ParserBase  {
 				return Parse_result{false, Position(end_pos), Position(end_pos) };
 		}
 
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
 			return true;
 		}
 
-		static inline can_accept_empty_input() {
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
 			return false;
 		}
+
+		
 #endif		
 
 		
@@ -257,14 +272,18 @@ struct PTok : ParserBase  {
 				return Parse_result{true, Position(token_start_pos), Position(end_pos), std::make_unique<AstType>() };
 		}
 
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static  bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
 			return true;
 		}
 
-		static inline can_accept_empty_input() {
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
 			return false;
 		}
+
+		
 #endif		
 
 
@@ -303,6 +322,8 @@ typedef Char_checker_result (PTokVar_cb_t) (Char_t current_char, bool iseof, Cha
 template<RuleId ruleId, PTokVar_cb_t checker, bool canAcceptEmptyInput = false>
 struct PTokVar : ParserBase  { 
 		
+		using ThisClass = PTokVar<ruleId, checker, canAcceptEmptyInput>;
+
 		const RuleId RULE_ID = ruleId;
 
 		struct AstType : AstEntryBase {
@@ -372,14 +393,17 @@ struct PTokVar : ParserBase  {
 				return Parse_result{false, token_start_pos, token_start_pos};
 		}
 
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
 			return true;
 		}
 
-		static inline can_accept_empty_input() {
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
 			return  canAcceptEmptyInput;
 		}
+
 #endif		
 
 
@@ -482,14 +506,18 @@ struct PAny : ParserBase  {
 		return res;
 	}
 
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
-			return validate_no_cycles_helper<0, Types...>(CycleDetectorHelper &helper, std::ostream &out);
+#ifdef __PARSER_ANALYSE__
+
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+			return verify_no_cycles_helper<HelperType, 0, Types...>(helper, out);
 		}
 
-		static inline can_accept_empty_input() {
-			return can_accept_empty_input_helper<Types...>();
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
+			return can_accept_empty_input_helper<HelperType, Types...>();
 		}
+
 #endif		
 
 
@@ -523,27 +551,37 @@ private:
     }
 
 
-#ifdef __PARSER_ANALYSE_
+#ifdef __PARSER_ANALYSE__
 
-		template<size_t FieldIndex, typename ParserBase, typename PType, typename ...PTypes>
-		static inline bool validate_no_cycles_helper(CycleDetectorHelper &helper, std::ostream &out) {
+		template<typename HelperType, size_t FieldIndex, typename PType, typename ...PTypes>
+		static inline bool verify_no_cycles_helper(CycleDetectorHelper &helper, std::ostream &out) {
+			
+			if (!helper.push_and_check(out, get_tinfo((PType *) nullptr), FieldIndex)) {
+				return false;
+			}
 
-			bool ret = 	PType::validate_no_cyles(helper, out);
+			bool ret = 	PType::verify_no_cycles((HelperType *) nullptr, helper, out);
+			
+			helper.pop();
 
-			ret = ret && validate_no_cycles_helper<FieldIndex+1,PTypes...>(helper, out);
+
+			if constexpr(sizeof ...(PTypes) > 0) {
+
+				ret = ret && verify_no_cycles_helper<HelperType, FieldIndex+1,PTypes...>(helper, out);
+			}
 					
 			return ret;
 		}
 
-		template<typename PType, typename ...PTypes>
-		static inline can_accept_empty_input_helper() {
+		template<typename HelperType, typename PType, typename ...PTypes>
+		static bool can_accept_empty_input_helper() {
 
-			if (PType::can_accept_empty_input()) {
+			if (PType::can_accept_empty_input((HelperType *) nullptr)) {
 				return true;
 			}
 
 			if constexpr(sizeof ...(PTypes) > 0) {
-				return can_accept_empty_input_helper<PTypes...>()
+				return can_accept_empty_input_helper<HelperType, PTypes...>();
 			}
 			return false;
 		}
@@ -610,17 +648,24 @@ struct POpt : ParserBase  {
 		return res;
 	}
 
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
-			if constexpr (minOccurance  == 0) {
-				return true;
-			}
-			return Type::validate_no_cycles(elper, out) ;
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+
+			helper.push_and_check(out, get_tinfo((PType *) nullptr), -1);
+
+			bool ret = PType::verify_no_cycles(helper, out) ;
+
+			helper.pop();
+
+			return ret;
 		}
 
-		static inline can_accept_empty_input() {
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
 			return true;
 		}
+
 #endif		
 
 
@@ -678,14 +723,17 @@ struct PSeq : ParserBase  {
         return res;
     }
 
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
-			return validate_no_cycles_helper<0, Types...>(CycleDetectorHelper &helper, std::ostream &out);
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+			return verify_no_cycles_helper<HelperType, 0, Types...>(helper, out);
 		}
 
-		static inline can_accept_empty_input() {
-			return can_accept_empty_input_helper<Types...>();
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
+			return can_accept_empty_input_helper<HelperType, Types...>();
 		}
+
 #endif		
 
 
@@ -719,27 +767,36 @@ private:
     }
 
 
-#ifdef __PARSER_ANALYSE_
+#ifdef __PARSER_ANALYSE__
 
-		template<size_t FieldIndex, typename ParserBase, typename PType, typename ...PTypes>
-		static inline bool validate_no_cycles_helper(CycleDetectorHelper &helper, std::ostream &out) {
+		template<typename HelperType, size_t FieldIndex, typename PType, typename ...PTypes>
+		static bool verify_no_cycles_helper(CycleDetectorHelper &helper, std::ostream &out) {
 
-			bool ret = 	PType::validate_no_cyles(helper, out);
+			if (!helper.push_and_check(out, get_tinfo((PType *) nullptr), FieldIndex)) {
+				return false;
+			}
 
-			if (PType::can_accept_empty_input()) {
+			bool ret = 	PType::verify_no_cycles((HelperType *) nullptr, helper, out);
 
-				ret = ret && validate_no_cycles_helper<FieldIndex+1,PTypes...>(helper, out);
+			helper.pop();
+
+			if (PType::can_accept_empty_input((HelperType *) nullptr)) {
+
+				if constexpr(sizeof ...(PTypes) > 0) {
+					ret = ret && verify_no_cycles_helper<HelperType, FieldIndex+1,PTypes...>(helper, out);
+				}
 			}
 					
 			return ret;
 		}
 
-		template<typename PType, typename ...PTypes>
-		static inline can_accept_empty_input_helper() {
+		template<typename HelperType, typename PType, typename ...PTypes>
+		static inline bool can_accept_empty_input_helper() {
 
-			if (PType::can_accept_empty_input()) {
+			if (PType::can_accept_empty_input((HelperType *) nullptr)) {
 				if constexpr(sizeof ...(PTypes) > 0) {
-					return can_accept_empty_input_helper<PTypes...>()
+					return can_accept_empty_input_helper<HelperType, PTypes...>();
+				}
 			}
 			return true;
 		}
@@ -837,17 +894,28 @@ private:
 		return Parse_result{true, Position(start_pos), Position(end_pos) };
 	}
 	
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+
+			helper.push_and_check(out, get_tinfo((Type *) nullptr), -1);
+
+			bool ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
+
+			helper.pop();
+
+			return ret;			
+		}
+
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
 			if constexpr (minOccurance  == 0) {
 				return true;
 			}
-			return Type::validate_no_cycles(elper, out) ;
+			//return Type::can_accept_empty_input<HelperType>();
+			return false;
 		}
 
-		static inline can_accept_empty_input() {
-			return Type::can_accept_empty_input();
-		}
 #endif		
 
 };
@@ -876,6 +944,9 @@ struct PPlus : PRepeat<ruleId, Type, 0, 0> {
 
 template<bool AndOrNotLookahead, typename Type, typename LookaheadType>
 struct PWithAndLookaheadImpl : ParserBase {
+
+    using ThisClass = PWithAndLookaheadImpl<AndOrNotLookahead, Type, LookaheadType>;
+		
 	const RuleId RULE_ID = Type::RULE_ID;
 		
 	struct AstType : Type::AstType {
@@ -913,14 +984,38 @@ struct PWithAndLookaheadImpl : ParserBase {
 		return res;
   	}
 
-#ifdef __PARSER_ANALYSE_
-		static inline bool validate_no_cycles(CycleDetectorHelper &helper, std::ostream &out) {
-			return Type::validate_no_cycles(elper, out) ;
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+			bool ret;
+			
+			helper.push_and_check(out, get_tinfo((Type *) nullptr), -1);
+
+			ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
+
+			helper.pop();
+
+			if (ret) {
+				
+				LookaheadType info;
+
+				helper.push_and_check(out, get_tinfo((LookaheadType *) nullptr), -1);
+
+				ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
+
+				helper.pop();
+			}
+
+			return ret;			
 		}
 
-		static inline can_accept_empty_input() {
-			return Type::can_accept_empty_input();
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
+			//return Type::can_accept_empty_input<HelperType>();
+			return false;
 		}
+
+	
 #endif
 
 	
