@@ -180,7 +180,7 @@ public:
 
     using Next_char_value = std::pair<bool, Char_t>;
 
-    Text_stream(bool resize_if_full = true) : fd_(-1), error_(0), pos_at_head_(0), resize_if_full_(resize_if_full) {
+    Text_stream(bool resize_if_full = true) : fd_(-1), error_(0), pos_at_head_(0), resize_if_full_(resize_if_full), position_nesting_(0) {
     }
 
     ~Text_stream() {
@@ -332,6 +332,7 @@ public:
     }
 
     Text_position pos_at_cursor() const {
+		position_nesting_ += 1;
         return pos_at_cursor_;
     }
 
@@ -342,8 +343,19 @@ public:
         }
         pos_at_cursor_ = pos;
         buf_.set_cursor( pos_at_cursor_.buffer_pos_ );
+		if (position_nesting_ == 0) {
+			ERROR("position nesting droppes to negative count. parser is wrong\n");
+		}
+		dec_position_nesting();
         return true;
     }
+
+	void dec_position_nesting() {
+		if (position_nesting_ == 0) {
+			ERROR("position nesting droppes to negative count. parser is wrong\n");
+		}
+		position_nesting_ -= 1;
+	}
 
 	// discard all text up until the argument position
     bool move_on(Text_position pos) {
@@ -442,7 +454,8 @@ private:
     FilePos_t pos_at_head_;
 	bool resize_if_full_;
     Text_position  pos_at_cursor_;
-    Text_ringbuffer buf_;
+    Text_ringbuffer buf_; 
+	mutable int position_nesting_;
 };
 
 } // namespace pparse
