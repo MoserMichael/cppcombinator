@@ -6,10 +6,33 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <fstream>
+#include <sstream>
+
 
 namespace {
 
 using namespace pparse;
+
+
+#if 0
+template<typename Parser>
+void dumpJson(const char *fname, ) {
+	
+	std::ofstream out(fname);
+
+	Parser::dumpJson(out);
+
+	out.close();
+
+	std::stringstream sout;
+	sout << "jq . <" << fname;
+
+	std::string cmd(sout.str());
+	int rcode = system(cmd.c_str());
+	EXPECT_TRUE(rcode == 0);
+}
+#endif
 
 template<typename Parser>
 Parse_result test_string(Char_t *test_string) {
@@ -29,11 +52,16 @@ Parse_result test_string(Char_t *test_string) {
 	if (!res.success()) {
 		printf("Error: parser error at: line: %d column: %d text: %s\n", res.get_start_pos().line(), res.get_start_pos().column(), test_string);
 	}
+	EXPECT_TRUE(res.get_ast() != nullptr);
+
+
+	//dumpJson("tmpfile.json");
 
 	return res;
 
 }
- 
+
+
 
 TEST(TestGrammar, testRecursion) {
 
@@ -63,18 +91,57 @@ TEST(TestGrammar, testRecursion) {
 
 	Parse_result result = test_string<ExprEof>((Char_t *) "-1");
 	EXPECT_TRUE(result.success());
-
+//
+//	if (result.get_ast() != nullptr ) {
+//
+//		
+//		ExprEof::dumpJson(std::cout, (ExprEof::AstType *) result.get_ast() );
+//	}
+//
 	result = test_string<ExprEof>((Char_t *) "1 * 3");
 	EXPECT_TRUE(result.success());
+
+//	if (result.get_ast() != nullptr ) {
+//		ExprEof::dumpJson(std::cout, (ExprEof::AstType *) result.get_ast() );
+//	}
+//
 
 	result = test_string<ExprEof>((Char_t *) "2 + 2 + 2");
 	EXPECT_TRUE(result.success());
 
+	if (result.get_ast() != nullptr ) {
+		std::ofstream out("test.json");
+//		ExprEof::dumpJson(out, (ExprEof::AstType *) result.get_ast() );
+		out.close();
+//		int rcode = system("jq . <test.json");
+//		EXPECT_TRUE(rcode == 0);
+
+	}
+
+
 	result = test_string<ExprEof>((Char_t *) "2 + 2 + 2 + 1 * 3");
 	EXPECT_TRUE(result.success());
 
+	if (result.get_ast() != nullptr ) {
+		std::ofstream out("test.json");
+//		ExprEof::dumpJson(out, (ExprEof::AstType *) result.get_ast() );
+		out.close();
+//		int rcode = system("jq . <test.json");
+//		EXPECT_TRUE(rcode == 0);
+	}
+
+
 	result = test_string<ExprEof>((Char_t *) "(2*3) + 5");
 	EXPECT_TRUE(result.success());
+
+	if (result.get_ast() != nullptr ) {
+		std::ofstream out("test.json");
+		ExprEof::dumpJson(out, (ExprEof::AstType *) result.get_ast() );
+		out.close();
+//		int rcode = system("jq . <test.json");
+//		EXPECT_TRUE(rcode == 0);
+	}
+
 }
 
 inline Char_checker_result pparse_regex_char(Char_t current_char, bool iseof, Char_t *matched_so_far) {

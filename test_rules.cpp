@@ -59,6 +59,9 @@ TEST(TestRules,testIntParser) {
 	result = test_string<TokenIntParser>((Char_t *) " \t12934" );
 	EXPECT_TRUE(result.success());
 
+	//TokenIntParser::dumpJson(std::cout, (TokenIntParser::AstType *) result.get_ast() );
+	
+
 	//printf("resul pos: start(line: %d col: %d) end(line: %d col: %d)\n", result.start_.line_, result.start_.column_, result.end_.line_, result.end_.column_ );
 	
 	EXPECT_TRUE(result.start_ == Position(1,2));
@@ -80,13 +83,14 @@ TEST(TestRules,testAnyCharParser) {
 
 	auto result = test_string<TokenCharParser>((Char_t *) " \tfFd" );
 	EXPECT_TRUE(result.success());
-
+	//TokenCharParser::dumpJson(std::cout, (TokenCharParser::AstType *) result.get_ast() );
 
 	//printf("resul pos: start(line: %d col: %d) end(line: %d col: %d)\n", result.start_.line_, result.start_.column_, result.end_.line_, result.end_.column_ );
 	
 	EXPECT_TRUE(result.start_ == Position(1,2));
 	EXPECT_TRUE(result.end_ ==  Position(1,2));
 	EXPECT_TRUE(result.get_ast()->getRuleId() ==  1);
+	
 
 	TokenCharParser::AstType *type = (TokenCharParser::AstType *) result.get_ast();
 
@@ -144,6 +148,9 @@ TEST(TestRules,testAnyParser) {
 	AstEntryBase *res = result.ast_.get();
 	EXPECT_TRUE( res != nullptr );
 	EXPECT_TRUE( res->ruleId_ == 4 );
+	
+	//TokenKeywdParser::dumpJson(std::cout, (TokenKeywdParser::AstType *) result.get_ast() );
+
 
 	TokenKeywdParser::AstType *anyAst = (TokenKeywdParser::AstType *) res;
 
@@ -164,6 +171,8 @@ TEST(TestRules,testOptParser) {
 
 	result = test_string<TokenIfParser>((Char_t *) "\t  else\n");
 	EXPECT_TRUE(result.success());
+	//TokenIfParser::dumpJson(std::cout, (TokenIfParser::AstType *) result.get_ast() );
+
 
 	ifAst = (TokenIfParser::AstType *) result.ast_.get();
 	EXPECT_FALSE(ifAst->entry_.has_value());

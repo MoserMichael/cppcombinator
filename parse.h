@@ -9,11 +9,15 @@
 #include "dhelper.h"
 #include "vhelper.h"
 #include "analyse.h"
+#include "json.h"
 #include <iostream>
+#include <sstream>
 
 namespace pparse {
 
 struct ParserBase {
+
+		using AstType = void;
 
 		using Char_value = Text_stream::Next_char_value;
 
@@ -75,6 +79,11 @@ struct ParserBase {
 
 #endif
 
+		template<typename Stream>
+		static void dumpJson(Stream &out, const AstType *ast) {
+				ERROR("Not implemented\n");
+		}
+
 		//virtual ~ParserBase() {}
 };
 
@@ -135,6 +144,10 @@ struct CharParser : ParserBase {
 		}
 #endif
 
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *) {
+		}
+
 
 private:
 		Text_stream &text_;
@@ -148,7 +161,7 @@ private:
 template<typename Type>
 struct PRequireEof : ParserBase  {
 
-		const RuleId RULE_ID = Type::RULE_ID;
+		static inline const RuleId RULE_ID = Type::RULE_ID;
 
 		struct AstType : Type::AstType {
 		};
@@ -171,7 +184,7 @@ struct PRequireEof : ParserBase  {
 				Text_position end_pos = ParserBase::current_pos(base);
 
 				if (!nchar.first) {
-						return Parse_result{true, Position(end_pos), Position(end_pos) };
+						return res;
 				}
 				return Parse_result{false, Position(end_pos), Position(end_pos) };
 		}
@@ -198,6 +211,11 @@ struct PRequireEof : ParserBase  {
 
 	
 #endif
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *ast) {
+			Type::dumpJson(out, ast);		
+		}
+
 
 		
 };
@@ -227,7 +245,7 @@ struct PRequireEof : ParserBase  {
 template<RuleId ruleId, Char_t ...Cs>
 struct PTok : ParserBase  {
 		
-		const RuleId RULE_ID = ruleId;
+		static inline const RuleId RULE_ID = ruleId;
 
 		using ThisClass = PTok<ruleId, Cs...>;
 
@@ -296,6 +314,19 @@ struct PTok : ParserBase  {
 		
 #endif		
 
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *ast) {
+
+			Json<Stream>::dumpRule(out, RULE_ID, "PTok" );
+
+			Json<Stream>::jsonStartNested(out, "value");
+			out << "\"";
+			dump_helper<Stream,Cs...>(out);
+			out << "\"";
+
+			Json<Stream>::jsonEndTag(out, true);
+		}
+
 
 private:
 		template<typename ParserBase, Char_t ch, Char_t ...Css>
@@ -311,7 +342,21 @@ private:
 				}
 
 				return true;
-		}
+		} 
+
+		template<typename Stream, Char_t ch, Char_t ...Css>
+		static inline bool dump_helper( Stream &stream) {
+
+				stream << ch;
+
+				if constexpr (sizeof...(Css) > 0) {
+					return dump_helper<Stream, Css...>( stream );
+				}
+
+				return true;
+		} 
+
+
 
 };
 
@@ -334,7 +379,7 @@ struct PTokVar : ParserBase  {
 		
 		using ThisClass = PTokVar<ruleId, checker, canAcceptEmptyInput>;
 
-		const RuleId RULE_ID = ruleId;
+		static inline const RuleId RULE_ID = ruleId;
 
 		struct AstType : AstEntryBase {
 				AstType() : AstEntryBase(ruleId) {
@@ -414,6 +459,16 @@ struct PTokVar : ParserBase  {
 
 #endif		
 
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *ast) {
+			Json<Stream>::dumpRule(out, RULE_ID,"PTokVar" );
+
+			//? extract the name of the callback function from type signature ?
+			//
+			Json<Stream>::jsonAddField(out, "token", ast->entry_.c_str(), true);
+
+			Json<Stream>::jsonEndTag(out);
+		}
 
 };
 
@@ -470,7 +525,7 @@ struct PTokChar : PTokVar<ruleId,parse_print_char>  {
 template<RuleId ruleId, typename ...Types>
 struct PAny : ParserBase  {
 
-	const RuleId RULE_ID = ruleId;
+	static inline const RuleId RULE_ID = ruleId;
 		
     using ThisClass = PAny<ruleId, Types...>;
 
@@ -529,6 +584,15 @@ struct PAny : ParserBase  {
 		}
 
 #endif		
+
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *ast) {
+			Json<Stream>::dumpRule(out, RULE_ID,"PAny" );
+			
+			dump_helper<0, Stream, Types...>(out, ast);
+
+			Json<Stream>::jsonEndTag(out);
+		}
 
 
 private:
@@ -595,6 +659,33 @@ private:
 		}
 #endif		
 
+		template<size_t FieldIndex, typename Stream, typename PType, typename ...PTypes>
+		static inline bool dump_helper( Stream &stream, const AstType *ast ) {
+
+				std::stringstream sout;
+
+				if (ast->entry_.index() == FieldIndex) {
+					//const TypePtr *ptr = nullptr; //std::get<Index>( ast->entry_ ).get();
+					sout << FieldIndex;
+					std::string sval(sout.str());
+
+
+					Json<Stream>::jsonAddField(stream, "optionIndex", sval.c_str());
+					Json<Stream>::jsonStartNested(stream, "data"); 
+
+					typename PType::AstType *retAst = (typename PType::AstType *) std::get<FieldIndex>( ast->entry_ ).get();
+					PType::dumpJson(stream, retAst );
+				}
+  
+				if constexpr (sizeof...(PTypes) > 0) {
+					Json<Stream>::jsonEndNested(stream,false);
+					return dump_helper<FieldIndex+1, Stream, PTypes...>( stream, ast );
+				} else {
+					Json<Stream>::jsonEndNested(stream,true);
+				}
+
+				return true;
+		} 
 
 };
 
@@ -605,7 +696,7 @@ private:
 template<RuleId ruleId, typename PType>
 struct POpt : ParserBase  {
 
-	const RuleId RULE_ID = ruleId;
+	static inline const RuleId RULE_ID = ruleId;
 		
     using ThisClass = POpt<ruleId, PType>;
 		
@@ -677,6 +768,17 @@ struct POpt : ParserBase  {
 
 #endif		
 
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *ast) {
+			Json<Stream>::dumpRule(out, RULE_ID,"POpt" );
+		
+			Json<Stream>::jsonStartNested(out, "Type");
+			PType::dumpJson(out, ast); 
+			Json<Stream>::jsonEndNested(out,true);
+		
+			Json<Stream>::jsonEndTag(out);
+		}
+
 
 };
 
@@ -690,7 +792,7 @@ struct PSeq : ParserBase  {
 
     using ThisClass = PSeq<ruleId, Types...>;
 	
-	const RuleId RULE_ID = ruleId;
+	static inline const RuleId RULE_ID = ruleId;
 	
 	struct AstType : AstEntryBase {
 			AstType() : AstEntryBase(ruleId) {
@@ -745,10 +847,38 @@ struct PSeq : ParserBase  {
 		}
 
 #endif		
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *ast) {
+			Json<Stream>::dumpRule(out, RULE_ID,"PSeq" );
+			
+			Json<Stream>::jsonStartNested(out, "Type", true);
+			dump_helper<0, Stream, Types...>(out, ast);
+			Json<Stream>::jsonEndNested(out, true, true);
 
+			Json<Stream>::jsonEndTag(out);
+		}
 
 private:
-    template<size_t FieldIndex, typename ParserBase, typename PType, typename ...PTypes>
+
+		template<size_t FieldIndex, typename Stream,  typename PType, typename ...PTypes>
+		static inline bool dump_helper( Stream &stream, const AstType *ast ) {
+
+				PType::dumpJson(stream, std::get<FieldIndex>( ast->entry_ ).get() );
+	
+				if constexpr (sizeof...(PTypes) > 0) {
+
+					Json<Stream>::jsonEndNested(stream,false);
+
+					return dump_helper<FieldIndex+1, Stream, PTypes...>( stream, ast );
+				} else {
+					//PType::dumpJson(stream, std::get<FieldIndex>( ast->entry_ ).get(), true);
+				}
+
+
+				return true;
+		} 
+   
+	template<size_t FieldIndex, typename ParserBase, typename PType, typename ...PTypes>
     static inline Parse_result parse_helper(ParserBase &base, AstType *ast, Position start_seq ) {
 
 		Parse_result res = PType::parse(base);						
@@ -823,7 +953,7 @@ struct PRepeat : ParserBase {
 
     using ThisClass = PRepeat<ruleId, Type>;
 
-	const RuleId RULE_ID = ruleId;
+	static inline const RuleId RULE_ID = ruleId;
 	
 	typedef typename std::unique_ptr< typename Type::AstType> AstTypeEntry;
  
@@ -841,6 +971,23 @@ struct PRepeat : ParserBase {
 		auto ast = std::make_unique<AstType>(); 
 		return parse_helper(base, &ast);
 	}
+
+	template<typename Stream>
+	static void dumpJson(Stream &out,  const AstType *ast) {
+			Json<Stream>::dumpRule(out, RULE_ID,"PRepeat" );
+			Json<Stream>::jsonAddField(out, "minOccurance", minOccurance ); 
+			Json<Stream>::jsonAddField(out, "maxOccurance", minOccurance ); 
+			
+			Json<Stream>::jsonStartNested(out, "content");
+
+			for(auto it=ast->entry_.begin(); it != ast->entry_.end(); ++it) {
+				Type::dumpJson(out, &it->entry_);	
+			}
+			Json<Stream>::jsonEndNested(out,true);
+
+			Json<Stream>::jsonEndTag(out);
+	}
+
 
 private:
     template<typename ParserBase>
@@ -921,9 +1068,7 @@ private:
 			//return Type::can_accept_empty_input<HelperType>();
 			return false;
 		}
-
 #endif		
-
 };
 
 //
@@ -953,7 +1098,7 @@ struct PWithAndLookaheadImpl : ParserBase {
 
     using ThisClass = PWithAndLookaheadImpl<AndOrNotLookahead, Type, LookaheadType>;
 		
-	const RuleId RULE_ID = Type::RULE_ID;
+	static inline const RuleId RULE_ID = Type::RULE_ID;
 		
 	struct AstType : Type::AstType {
 	};
@@ -1023,6 +1168,11 @@ struct PWithAndLookaheadImpl : ParserBase {
 
 	
 #endif
+
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *ast) {
+			Type::dumpJson(out, ast);		
+		}
 
 	
 };
