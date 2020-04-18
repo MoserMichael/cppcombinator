@@ -9,7 +9,8 @@ TEST_FILES=test_stream.cpp \
 
 TEST_OBJS:=$(subst .cpp,.o,$(TEST_FILES))
 
-GCC_CPP_OPTS=-std=c++17 
+#GCC_CPP_OPTS=-std=c++17  -pedantic -Wall -Wextra -Wshadow -Werror  
+GCC_CPP_OPTS=-std=c++17  -pedantic -Wall -Wshadow -Werror  
 
 GCC_LD_OPTS=-lstdc++ -lgtest -lpthread 
 

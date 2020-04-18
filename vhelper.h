@@ -16,24 +16,24 @@ struct VisualizeTrace {
 
 		static std::string  trace_start_parsing(Text_position pos) {
 			std::string short_name = make_short_name();
-			printf("(%03d)%sstart parsing: %s at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), pos.line_, pos.column_, pos.buffer_pos_);
+			printf("(%03ld)%sstart parsing: %s at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), pos.line_, pos.column_, pos.buffer_pos_);
 			nesting_ += 1;
 			return short_name;
 		}
 
 		static void end_parsing(std::string &short_name, bool success,Text_position pos) {
 			nesting_ -= 1;
-			printf("(%03d)%send parsing: %s %s at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), success ? "SUCCESS" : "FAIL", pos.line_, pos.column_, pos.buffer_pos_ );
+			printf("(%03ld%send parsing: %s %s at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), success ? "SUCCESS" : "FAIL", pos.line_, pos.column_, pos.buffer_pos_ );
 		}
 
 		static void end_parsing_choice(std::string &short_name, bool success,Text_position pos, size_t index) {
 			nesting_ -= 1;
 
 			if (success) {
-				printf("(%03d)%send parsing: %s SUCCESS choice-index: %ld at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), index , pos.line_, pos.column_, pos.buffer_pos_ );
+				printf("(%03ld)%send parsing: %s SUCCESS choice-index: %ld at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), index , pos.line_, pos.column_, pos.buffer_pos_ );
 			} else {
 
-				printf("(%03d)%send parsing: %s FAIL at (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), pos.line_, pos.column_, pos.buffer_pos_ );
+				printf("(%03ld)%send parsing: %s FAIL at (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), pos.line_, pos.column_, pos.buffer_pos_ );
 			}
 		}
 
@@ -41,7 +41,7 @@ struct VisualizeTrace {
 		static std::string  trace_start_parsing_token(Text_position pos) {
 			std::string short_name = make_token_name();
 			
-			printf("(%03d)%sstart parsing: %s at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), pos.line_, pos.column_, pos.buffer_pos_);
+			printf("(%03ld)%sstart parsing: %s at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), pos.line_, pos.column_, pos.buffer_pos_);
 			nesting_ += 1;
 			
 			return short_name;
@@ -136,10 +136,10 @@ private:
 
 				if (ret.second == 0) {
 
-					size_t npos = component.rfind(':');
-					if (npos != std::string::npos) {
-						npos += 1;
-						rname += " " + component.substr(npos, component.size() - npos);
+					size_t nposc = component.rfind(':');
+					if (nposc != std::string::npos) {
+						nposc += 1;
+						rname += " " + component.substr(nposc, component.size() - nposc);
 					} else {
 						rname += " " + component;
 					}

@@ -60,8 +60,7 @@ TEST(TestAnalyze, testCycle) {
 
 		helper.pop();
 
-//	bool is_valid = ParserChecker<MultExpr>::check(std::cout);	
-//	EXPECT_FALSE(is_valid);
+		EXPECT_FALSE(is_valid);
 
 }
 
@@ -97,6 +96,7 @@ TEST(TestAnalyze, testNoCycle) {
 
 		helper.pop();
 
+		EXPECT_TRUE(is_valid);
 
 }
 

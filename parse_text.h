@@ -320,7 +320,6 @@ public:
 		auto rval = current_char();
 
 		if (rval.first) {
-				auto cur_char = buf_.cursor_char();
 				if (!buf_.inc_cursor()) {
 					ERROR("HOW???\n");
 					exit(1);

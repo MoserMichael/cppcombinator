@@ -275,11 +275,11 @@ TEST(TestRules,testWithAndParser) {
 	AstEntryBase *res = result1.ast_.get();
 	EXPECT_TRUE( res != nullptr );
 
-	TokenWithAndParser1::AstType *ptype  = (TokenWithAndParser1::AstType *) res; 
+	//TokenWithAndParser1::AstType *ptype  = (TokenWithAndParser1::AstType *) res; 
 	EXPECT_TRUE( res->ruleId_ == 1 );
 }
 
 
 
-};
+}
 

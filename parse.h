@@ -182,8 +182,6 @@ struct PRequireEof : ParserBase  {
 					return res;
 				}
 
-				Text_position start_pos = ParserBase::current_pos_and_inc_nesting(base);
-
 				Char_value  nchar = ParserBase::current_char(base);
 				while (nchar.first && isspace(nchar.second)) { 
 						ParserBase::next_char(base);
@@ -279,7 +277,7 @@ struct PTok : ParserBase  {
 
 				if (! parse_helper<ParserBase,Cs...>(base)) {
 					ParserBase::backtrack(base, start_pos);
-					Text_position end_pos = ParserBase::current_pos(base);
+					//Text_position end_pos = ParserBase::current_pos(base);
 
 #ifdef __PARSER_TRACE__
 					VisualizeTrace<ThisClass>::end_parsing(short_name, false, ParserBase::current_pos(base));
@@ -373,8 +371,6 @@ struct PTokVar : ParserBase  {
 		template<typename ParserBase>
 		static Parse_result  parse(ParserBase &base) {
 			
-				Text_position start_pos = ParserBase::current_pos(base);
-
 				Char_value  nchar = ParserBase::current_char(base);
 				while (nchar.first && isspace(nchar.second)) { 
 						ParserBase::next_char(base);
@@ -567,8 +563,6 @@ private:
 		typedef std::unique_ptr<typename PType::AstType> PTypePtr; 
         
 		if (res.success_) {
-			typename PType::AstType *retAst;
-
 			if (res.ast_.get() != nullptr) {
 				typename PType::AstType *retAst = (typename PType::AstType *) res.ast_.release();
 				ast->entry_ = VariantType{ std::in_place_index<FieldIndex>, PTypePtr(retAst) };
@@ -792,8 +786,6 @@ private:
 			start_seq = res.start_;
 		}
 
-		typename PType::AstType *retAst;
-
 		if (res.ast_.get() != nullptr) {
 			typename PType::AstType *retAst = (typename PType::AstType *) res.ast_.release();
 			std::get<FieldIndex>( ast->entry_ ) = PTypePtr(retAst); 
@@ -870,7 +862,6 @@ struct PRepeat : ParserBase {
     template<typename ParserBase>
 	static Parse_result  parse(ParserBase &base) {
 
-		bool ret;
 		if constexpr (ruleId != 0) {
 			auto ast = std::make_unique<AstType>(); 
 			return parse_helper(base, &ast);
@@ -894,7 +885,6 @@ private:
 			Parse_result res = Type::parse(base);
 			if (!res.success_) {
 				ParserBase::backtrack(base, start_pos);
-				Text_position end_pos = ParserBase::current_pos(base);
 
 #ifdef __PARSER_TRACE__
 				VisualizeTrace<ThisClass>::end_parsing(short_name, res.success_, ParserBase::current_pos(base));
@@ -1020,7 +1010,6 @@ struct PWithAndLookaheadImpl : ParserBase {
 
 		if (isfail) {
 			ParserBase::backtrack(base, start_pos);
-			Text_position end_pos = ParserBase::current_pos(base);
 			return Parse_result{false, resLookahead.start_, resLookahead.end_ };
 		}
 		ParserBase::backtrack(base, lookahead_start_pos);
@@ -1082,6 +1071,6 @@ template<typename Type, typename LookaheadType>
 struct PWithNotLookahead: PWithAndLookaheadImpl<false, Type, LookaheadType> {
 };
 
-}; // namespace pparse
+} // namespace pparse
 
 

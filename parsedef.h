@@ -82,6 +82,6 @@ struct Parse_result {
 	std::unique_ptr<AstEntryBase>  ast_;
 };
 
-}; // namespace pparse
+} // namespace pparse
 
 

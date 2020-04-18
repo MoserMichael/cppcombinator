@@ -131,4 +131,6 @@ TEST(TestGrammar, testRegEx) {
 	result = test_string<RegexEof>((Char_t *) "abc([0-9]+)?" );
 	EXPECT_TRUE(result.success());
 
-}};
+}
+
+}
