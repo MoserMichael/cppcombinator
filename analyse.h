@@ -33,6 +33,7 @@ struct CycleDetectorHelper {
 								out << "\n";
 							}
 							out << demangle(typid);
+							out << "\n";
 							no_cycles = false;
 						}
 			}
