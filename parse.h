@@ -299,10 +299,6 @@ struct PTok : ParserBase  {
 
 				end_pos.column_ -= 1;
 
-				if constexpr (ruleId == 0)
-				{
-					return Parse_result{true, Position(token_start_pos), Position(end_pos) };
-				} 
 				return Parse_result{true, Position(token_start_pos), Position(end_pos), std::make_unique<AstType>() };
 		}
 
@@ -862,11 +858,8 @@ struct PRepeat : ParserBase {
     template<typename ParserBase>
 	static Parse_result  parse(ParserBase &base) {
 
-		if constexpr (ruleId != 0) {
-			auto ast = std::make_unique<AstType>(); 
-			return parse_helper(base, &ast);
-		} 			
-		return parse_helper(base, nullptr);
+		auto ast = std::make_unique<AstType>(); 
+		return parse_helper(base, &ast);
 	}
 
 private:
