@@ -36,6 +36,11 @@ struct ParserBase {
 		}
 
 		template<typename ParserBase>
+		static inline Text_position current_pos_and_inc_nesting(ParserBase &parser) {
+				return parser.current_pos_and_inc_nesting();
+		}
+
+		template<typename ParserBase>
 		static inline Text_position current_pos(ParserBase &parser) {
 				return parser.current_pos(); 
 		}
@@ -44,6 +49,12 @@ struct ParserBase {
 		static inline bool backtrack(ParserBase &parser, Text_position pos) {
 				return  ParserBase::backtrack(parser, pos);
 		}
+
+		static inline Text_position dec_position_nesting(ParserBase &parser) {
+				return  ParserBase::dec_position_nesting(parser);
+		}
+
+
 
 #ifdef __PARSER_ANALYSE__
 		template<typename HelperType>
@@ -112,12 +123,23 @@ struct CharParser : ParserBase {
 
 
 		static inline Text_position current_pos(CharParser &parser) {
+				return parser.text_.pos_at_cursor(); 
+		}
+
+		static inline Text_position current_pos_and_inc_nesting(CharParser&parser) {
+				return parser.text_.pos_at_cursor_and_inc_nesting(); 
+		}
+
+
+		static inline Text_position dec_position_nesting(CharParser &parser) {
 				return parser.text_.pos_at_cursor();
 		}
 
 		static inline bool backtrack(CharParser &parser, Text_position pos) {
 				return parser.text_.backtrack(pos);
 		}
+
+
 
 #ifdef __PARSER_ANALYSE_
 		template<typename HelperType>
@@ -154,7 +176,7 @@ struct PEof : ParserBase  {
 		template<typename ParserBase>
 		static Parse_result  parse(ParserBase &base) {
 
-				Text_position start_pos = ParserBase::current_pos(base);
+				Text_position start_pos = ParserBase::current_pos_and_inc_nesting(base);
 
 				Char_value  nchar = ParserBase::current_char(base);
 				while (nchar.first && isspace(nchar.second)) { 
@@ -165,6 +187,7 @@ struct PEof : ParserBase  {
 				Text_position end_pos = ParserBase::current_pos(base);
 
 				if (!nchar.first) {
+						ParserBase::dec_position_nesting(base);
 						return Parse_result{true, Position(end_pos), Position(end_pos) };
 				}
 
@@ -227,7 +250,7 @@ struct PTok : ParserBase  {
 		template<typename ParserBase>
 		static Parse_result  parse(ParserBase &base) {
 
-				Text_position start_pos = ParserBase::current_pos(base);
+				Text_position start_pos = ParserBase::current_pos_and_inc_nesting(base);
 
 				Char_value  nchar = ParserBase::current_char(base);
 				while (nchar.first && isspace(nchar.second)) { 
@@ -252,7 +275,10 @@ struct PTok : ParserBase  {
 
 					
 					return Parse_result{false, Position(token_start_pos), Position(token_start_pos) };
+				} else {
+						ParserBase::dec_position_nesting(base);
 				}
+
 
 #ifdef __PARSER_TRACE__
 				VisualizeTrace<ThisClass>::end_parsing(short_name, true, ParserBase::current_pos(base));
@@ -696,7 +722,7 @@ struct PSeq : ParserBase  {
 	static Parse_result  parse(ParserBase &base) {
 
 
-		Text_position start_pos = ParserBase::current_pos(base);
+		Text_position start_pos = ParserBase::current_pos_and_inc_nesting(base);
 		Position start_seq;
 
 #ifdef __PARSER_TRACE__
@@ -713,6 +739,7 @@ struct PSeq : ParserBase  {
 
 		if (res.success_) {
 			res.ast_.reset( ast.release() );
+			ParserBase::dec_position_nesting(base);
 		}
 
 
@@ -843,7 +870,7 @@ private:
     template<typename ParserBase>
 	static Parse_result  parse_helper(ParserBase &base, std::unique_ptr<AstType> *ast) {
 
-		Text_position start_pos = ParserBase::current_pos(base);
+		Text_position start_pos = ParserBase::current_pos_and_inc_nesting(base);
 
 #ifdef __PARSER_TRACE__
 		std::string short_name = VisualizeTrace<ThisClass>::trace_start_parsing(start_pos);
@@ -863,12 +890,15 @@ private:
 
 
 				return res;
-			}
+			} 
 			if (ast != nullptr) {
 				typename Type::AstType *retAst = (typename Type::AstType *) res.ast_.release();
 				ast->get()->entry_.push_back( AstTypeEntry( retAst ) ); 
 			}
 		}
+
+		ParserBase::dec_position_nesting(base);
+
 		for(int i = minOccurance; ; ++i ) {
 
 			Parse_result res = Type::parse(base);
@@ -957,12 +987,13 @@ struct PWithAndLookaheadImpl : ParserBase {
 	static Parse_result  parse(ParserBase &base) {
 
 
-		Text_position start_pos = ParserBase::current_pos(base);
+		Text_position start_pos = ParserBase::current_pos_and_inc_nesting(base);
 		Parse_result res = Type::parse(base);
 		if (!res.success_) {
+			ParserBase::dec_position_nesting(base);
 //			ParserBase::backtrack(base, start_pos);
 			return res;
-		}
+		} 
 
 		Text_position lookahead_start_pos = ParserBase::current_pos(base);
 		Parse_result resLookahead = LookaheadType::parse(base);
