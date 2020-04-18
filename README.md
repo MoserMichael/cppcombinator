@@ -7,3 +7,21 @@ The library is a header only c++17 library.
 The generated parser is a [PEG grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
 
 It has some advanced features such as grammar validation and tracing of the parser in action. 
+
+
+# Introduction
+
+
+# Rule reference
+
+
+# Validation of grammar
+
+
+# Tracing
+
+
+# What i learned from all this
+
+
+
