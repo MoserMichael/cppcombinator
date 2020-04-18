@@ -1,0 +1,42 @@
+
+TEST_FILES=test_stream.cpp \
+		   test_rules.cpp \
+		   test_grammar.cpp \
+		   test_trace.cpp \
+		   test_analyse.cpp \
+		   test_main.cpp
+
+OBJ_DIR=.obj-gcc
+
+TEST_OBJS:=$(subst .cpp,.o,$(TEST_FILES))
+
+LINK_OBJS:=$(patsubst %.cpp,$(OBJ_DIR)/%.o,$(TEST_FILES))
+
+#GCC_CPP_OPTS=-std=c++17  -pedantic -Wall -Wextra -Wshadow -Werror  
+GCC_CPP_OPTS=-std=c++17  -pedantic -Wall -Wshadow -Werror  
+
+GCC_LD_OPTS=-lstdc++ -lgtest -lpthread 
+
+.PHOHY: all
+all : test-gcc
+
+
+.PHONY: make-obj-dir
+make-obj-dir:
+	@mkdir -p $(OBJ_DIR)
+
+
+test-gcc :  make-obj-dir $(LINK_OBJS)
+	gcc -g -o test-gcc $(LINK_OBJS) -lstdc++ -lgtest -lpthread
+
+.PHONY: test
+test : test-gcc
+	@echo "test with gcc"
+	./test-gcc
+
+.PHONY: clean
+clean :
+	rm -rf $(OBJ_DIR) test-gcc
+
+$(OBJ_DIR)/%.o:  %.cpp
+	gcc $(GCC_CPP_OPTS) -c $< -o $@

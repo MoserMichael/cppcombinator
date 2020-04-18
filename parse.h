@@ -37,23 +37,27 @@ struct ParserBase {
 
 		template<typename ParserBase>
 		static inline Text_position current_pos_and_inc_nesting(ParserBase &parser) {
+				ERROR("Not implemented\n");
 				return parser.current_pos_and_inc_nesting();
 		}
 
 		template<typename ParserBase>
 		static inline Text_position current_pos(ParserBase &parser) {
+				ERROR("Not implemented\n");
 				return parser.current_pos(); 
 		}
 
 		template<typename ParserBase>
 		static inline bool backtrack(ParserBase &parser, Text_position pos) {
-				return  ParserBase::backtrack(parser, pos);
+				ERROR("Not implemented\n");
+				return parser.backtrack(parser, pos);
 		}
 
-		static inline Text_position dec_position_nesting(ParserBase &parser) {
-				return  ParserBase::dec_position_nesting(parser);
-		}
-
+//		static inline Text_position dec_position_nesting(ParserBase &parser) {
+//				ERROR("Not implemented\n");
+//				return  parser.dec_position_nesting(parser);
+//		}
+//
 
 
 #ifdef __PARSER_ANALYSE__
