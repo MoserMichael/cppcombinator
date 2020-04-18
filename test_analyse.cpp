@@ -50,17 +50,21 @@ TEST(TestAnalyze, testCycle) {
 
 	struct MultExpr: PAny<7, PSeq<6, SimpleExpr, Mult, MultExpr >, SimpleExpr> {};
 
-	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {};
-	
-		CycleDetectorHelper helper;
+	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {}; 
 
-		helper.push_and_check(std::cout, get_tinfo((MultExpr *) nullptr), -1);
+	bool no_cycles = ParserChecker<Expr>::check(std::cout);
+	EXPECT_TRUE(no_cycles);
 
-		bool is_valid = MultExpr::verify_no_cycles((void *) nullptr, helper, std::cout);
-
-		helper.pop();
-
-		EXPECT_FALSE(is_valid);
+//	
+//		CycleDetectorHelper helper;
+//
+//		helper.push_and_check(std::cout, get_tinfo((MultExpr *) nullptr), -1);
+//
+//		bool is_valid = MultExpr::verify_no_cycles((void *) nullptr, helper, std::cout);
+//
+//		helper.pop();
+//
+//		EXPECT_FALSE(is_valid);
 
 }
 
@@ -88,16 +92,20 @@ TEST(TestAnalyze, testNoCycle) {
 
 	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {};
 	
-		CycleDetectorHelper helper;
 
-		helper.push_and_check(std::cout, get_tinfo((MultExpr *) nullptr), -1);
+	bool no_cycles = ParserChecker<Expr>::check(std::cout);
+	EXPECT_FALSE(no_cycles);
 
-		bool is_valid = MultExpr::verify_no_cycles((void *) nullptr, helper, std::cout);
-
-		helper.pop();
-
-		EXPECT_TRUE(is_valid);
-
+//		CycleDetectorHelper helper;
+//
+//		helper.push_and_check(std::cout, get_tinfo((MultExpr *) nullptr), -1);
+//
+//		bool is_valid = MultExpr::verify_no_cycles((void *) nullptr, helper, std::cout);
+//
+//		helper.pop();
+//
+//		EXPECT_TRUE(is_valid);
+//
 }
 
 }//namespace

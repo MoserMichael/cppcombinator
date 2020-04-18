@@ -82,21 +82,21 @@ static const std::type_info &get_tinfo(Info *ptr)  {
 }
 
 
-//template<typename Grammar> 
-//struct ParserChecker {
-//	static bool check(std::ostream &stream) {
-//		CycleDetectorHelper helper;
-//		
-//		helper.push_and_check(stream, get_tinfo<Grammar>(), -1);
-//
-//		bool ret = Grammar::verify_no_cycles<void>(helper, stream);
-//
-//		helper.pop();
-//
-//		return !ret;
-//	}
-//};
-//
+template<typename Grammar> 
+struct ParserChecker {
+	static bool check(std::ostream &stream) {
+		CycleDetectorHelper helper;
+		
+		helper.push_and_check(stream, get_tinfo((Grammar *) nullptr), -1);
+
+		bool ret = Grammar::verify_no_cycles((void *) nullptr, helper, stream);
+
+		helper.pop();
+
+		return !ret;
+	}
+};
+
 #endif
  
 		
