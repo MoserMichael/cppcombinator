@@ -14,25 +14,17 @@ namespace {
 
 using namespace pparse;
 
-
-#if 0
-template<typename Parser>
-void dumpJson(const char *fname, ) {
-	
-	std::ofstream out(fname);
-
-	Parser::dumpJson(out);
-
-	out.close();
-
-	std::stringstream sout;
-	sout << "jq . <" << fname;
-
-	std::string cmd(sout.str());
-	int rcode = system(cmd.c_str());
-	EXPECT_TRUE(rcode == 0);
+bool runJq() {
+	int rt = system("which jq");
+	if (rt == 0) {
+		int rcode = system("jq . <test.json");
+		return rcode == 0;
+	} else {
+		system("cat test.json");
+	}
+	return true;
 }
-#endif
+
 
 template<typename Parser>
 Parse_result test_string(Char_t *test_string) {
@@ -53,9 +45,6 @@ Parse_result test_string(Char_t *test_string) {
 		printf("Error: parser error at: line: %d column: %d text: %s\n", res.get_start_pos().line(), res.get_start_pos().column(), test_string);
 	}
 	EXPECT_TRUE(res.get_ast() != nullptr);
-
-
-	//dumpJson("tmpfile.json");
 
 	return res;
 
@@ -124,10 +113,10 @@ TEST(TestGrammar, testRecursion) {
 
 	if (result.get_ast() != nullptr ) {
 		std::ofstream out("test.json");
-//		ExprEof::dumpJson(out, (ExprEof::AstType *) result.get_ast() );
+		ExprEof::dumpJson(out, (ExprEof::AstType *) result.get_ast() );
 		out.close();
-//		int rcode = system("jq . <test.json");
-//		EXPECT_TRUE(rcode == 0);
+		bool rt = runJq();
+		EXPECT_TRUE(rt);
 	}
 
 
@@ -138,8 +127,8 @@ TEST(TestGrammar, testRecursion) {
 		std::ofstream out("test.json");
 		ExprEof::dumpJson(out, (ExprEof::AstType *) result.get_ast() );
 		out.close();
-//		int rcode = system("jq . <test.json");
-//		EXPECT_TRUE(rcode == 0);
+		bool rt = runJq();
+		EXPECT_TRUE(rt);
 	}
 
 }

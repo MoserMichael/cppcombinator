@@ -40,7 +40,7 @@ Parse_result test_string(Char_t *test_string) {
  
 TEST(TestRules,testIntParser) {
  
-	using TokenIntParser = PTokInt<1>;
+	struct TokenIntParser : PTokInt<1> {};
 
 	auto result = test_string<TokenIntParser>((Char_t *) " \t12934 " );
 	EXPECT_TRUE(result.success());
@@ -59,7 +59,9 @@ TEST(TestRules,testIntParser) {
 	result = test_string<TokenIntParser>((Char_t *) " \t12934" );
 	EXPECT_TRUE(result.success());
 
-	//TokenIntParser::dumpJson(std::cout, (TokenIntParser::AstType *) result.get_ast() );
+	TokenIntParser::dumpJson(std::cout, (TokenIntParser::AstType *) result.get_ast() );
+	std::cout << "\n";
+
 	
 
 	//printf("resul pos: start(line: %d col: %d) end(line: %d col: %d)\n", result.start_.line_, result.start_.column_, result.end_.line_, result.end_.column_ );
@@ -79,11 +81,13 @@ TEST(TestRules,testIntParser) {
 TEST(TestRules,testAnyCharParser) {
  
 
-	using TokenCharParser = PTokChar<1>;
+	struct TokenCharParser : PTokChar<1> {};
 
 	auto result = test_string<TokenCharParser>((Char_t *) " \tfFd" );
 	EXPECT_TRUE(result.success());
-	//TokenCharParser::dumpJson(std::cout, (TokenCharParser::AstType *) result.get_ast() );
+	TokenCharParser::dumpJson(std::cout, (TokenCharParser::AstType *) result.get_ast() );
+	std::cout << "\n";
+
 
 	//printf("resul pos: start(line: %d col: %d) end(line: %d col: %d)\n", result.start_.line_, result.start_.column_, result.end_.line_, result.end_.column_ );
 	
@@ -112,7 +116,7 @@ TEST(TestRules,testTokenParser) {
 
 	CharParser chparser(text_stream);
 	
-	using TokenIfParser = PTok<0, CSTR2("if")>;
+	struct TokenIfParser : PTok<0, CSTR2("if")> {};
 
 	auto result = TokenIfParser::parse( chparser );
 	EXPECT_TRUE(result.success());
@@ -132,13 +136,13 @@ TEST(TestRules,testAnyParser) {
 
 	isok = text_stream.write_tail((Char_t*)" \telse" , 7);
 
-	using TokenIfParser = PTok<1, CSTR2("if")>;
+	struct TokenIfParser : PTok<1, CSTR2("if")> {};
 
-	using TokenThenParser = PTok<2, CSTR4("then")>;
+	struct TokenThenParser : PTok<2, CSTR4("then")> {};
 
-	using TokenElseParser = PTok<3, CSTR4("else")>;
+	struct TokenElseParser : PTok<3, CSTR4("else")> {};
 
-	using TokenKeywdParser = PAny<4, TokenIfParser, TokenElseParser, TokenThenParser>;
+	struct TokenKeywdParser : PAny<4, TokenIfParser, TokenElseParser, TokenThenParser> {};
 
 	CharParser chparser(text_stream);
 	
@@ -149,7 +153,8 @@ TEST(TestRules,testAnyParser) {
 	EXPECT_TRUE( res != nullptr );
 	EXPECT_TRUE( res->ruleId_ == 4 );
 	
-	//TokenKeywdParser::dumpJson(std::cout, (TokenKeywdParser::AstType *) result.get_ast() );
+	TokenKeywdParser::dumpJson(std::cout, (TokenKeywdParser::AstType *) result.get_ast() );
+	std::cout << "\n";
 
 
 	TokenKeywdParser::AstType *anyAst = (TokenKeywdParser::AstType *) res;
@@ -160,7 +165,7 @@ TEST(TestRules,testAnyParser) {
 
 TEST(TestRules,testOptParser) {
 
-	using TokenIfParser = POpt<2, PTok<1, CSTR2("if")> >;
+	struct TokenIfParser : POpt<2, PTok<1, CSTR2("if")> > {};
 	
 	Parse_result result = test_string<TokenIfParser>((Char_t *) "\t  if\n");
 	EXPECT_TRUE(result.success());
@@ -171,7 +176,9 @@ TEST(TestRules,testOptParser) {
 
 	result = test_string<TokenIfParser>((Char_t *) "\t  else\n");
 	EXPECT_TRUE(result.success());
-	//TokenIfParser::dumpJson(std::cout, (TokenIfParser::AstType *) result.get_ast() );
+	TokenIfParser::dumpJson(std::cout, (TokenIfParser::AstType *) result.get_ast() );
+	std::cout << "\n";
+
 
 
 	ifAst = (TokenIfParser::AstType *) result.ast_.get();
@@ -190,13 +197,13 @@ TEST(TestRules,testSeqParser) {
 	const Char_t *str = " \tif then else"; 
 	isok = text_stream.write_tail(str, strlen(str));
 
-	using TokenIfParser = PTok<1, CSTR2("if")>;
+	struct TokenIfParser : PTok<1, CSTR2("if")> {};
 
-	using TokenThenParser = PTok<2, CSTR4("then")>;
+	struct TokenThenParser : PTok<2, CSTR4("then")> {};
 
-	using TokenElseParser = PTok<3, CSTR4("else")>;
+	struct TokenElseParser : PTok<3, CSTR4("else")> {};
 
-	using TokenKeywdParser = PSeq<4, TokenIfParser, TokenThenParser, TokenElseParser>;
+	struct TokenKeywdParser : PSeq<4, TokenIfParser, TokenThenParser, TokenElseParser> {};
 
 	CharParser chparser(text_stream);
 	
@@ -230,9 +237,9 @@ TEST(TestRules,testStarParser) {
 	const Char_t *str = " \tAA A\nA A\tAA"; 
 	isok = text_stream.write_tail(str, strlen(str));
 
-	using TokenAParser = PTok<1, CSTR1("A")>;
+	struct TokenAParser : PTok<1, CSTR1("A")> {}; 
 
-	using TokenStarParser = PStar<4, TokenAParser>;
+	struct TokenStarParser : PStar<4, TokenAParser> {};
 
 
 	CharParser chparser(text_stream);
@@ -265,13 +272,13 @@ TEST(TestRules,testWithAndParser) {
 	const Char_t *str = " \t if then"; 
 	isok = text_stream.write_tail(str, strlen(str));
 
-	using TokenIfParser = PTok<1, CSTR2("if")>;
-	using TokenThenParser = PTok<2, CSTR4("then")>;
-	using TokenElseParser = PTok<3, CSTR4("else")>;
+	struct TokenIfParser : PTok<1, CSTR2("if")> {};
+	struct TokenThenParser : PTok<2, CSTR4("then")> {};
+	struct TokenElseParser : PTok<3, CSTR4("else")> {};
 
 
-	using TokenWithAndParser1 = PWithAndLookahead<TokenIfParser, TokenThenParser>;
-	using TokenWithAndParser2 = PWithAndLookahead<TokenIfParser, TokenElseParser>;
+	struct TokenWithAndParser1 : PWithAndLookahead<TokenIfParser, TokenThenParser> {};
+	struct TokenWithAndParser2 : PWithAndLookahead<TokenIfParser, TokenElseParser> {};
 
 	CharParser chparser(text_stream);
 

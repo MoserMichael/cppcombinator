@@ -467,7 +467,7 @@ struct PTokVar : ParserBase  {
 			//
 			Json<Stream>::jsonAddField(out, "token", ast->entry_.c_str(), true);
 
-			Json<Stream>::jsonEndTag(out);
+			Json<Stream>::jsonEndTag(out, true);
 		}
 
 };
@@ -591,7 +591,7 @@ struct PAny : ParserBase  {
 			
 			dump_helper<0, Stream, Types...>(out, ast);
 
-			Json<Stream>::jsonEndTag(out);
+			Json<Stream>::jsonEndTag(out, true);
 		}
 
 
@@ -675,14 +675,14 @@ private:
 
 					typename PType::AstType *retAst = (typename PType::AstType *) std::get<FieldIndex>( ast->entry_ ).get();
 					PType::dumpJson(stream, retAst );
+
+					Json<Stream>::jsonEndNested(stream,true);			
+
 				}
   
 				if constexpr (sizeof...(PTypes) > 0) {
-					Json<Stream>::jsonEndNested(stream,false);
 					return dump_helper<FieldIndex+1, Stream, PTypes...>( stream, ast );
-				} else {
-					Json<Stream>::jsonEndNested(stream,true);
-				}
+				} 
 
 				return true;
 		} 
@@ -773,10 +773,11 @@ struct POpt : ParserBase  {
 			Json<Stream>::dumpRule(out, RULE_ID,"POpt" );
 		
 			Json<Stream>::jsonStartNested(out, "Type");
-			PType::dumpJson(out, ast); 
+			typename PType::AstType *ptr = (typename PType::AstType *) ast;
+			PType::dumpJson(out, ptr); 
 			Json<Stream>::jsonEndNested(out,true);
 		
-			Json<Stream>::jsonEndTag(out);
+			Json<Stream>::jsonEndTag(out, true);
 		}
 
 
@@ -855,7 +856,7 @@ struct PSeq : ParserBase  {
 			dump_helper<0, Stream, Types...>(out, ast);
 			Json<Stream>::jsonEndNested(out, true, true);
 
-			Json<Stream>::jsonEndTag(out);
+			Json<Stream>::jsonEndTag(out, true);
 		}
 
 private:
@@ -985,7 +986,7 @@ struct PRepeat : ParserBase {
 			}
 			Json<Stream>::jsonEndNested(out,true);
 
-			Json<Stream>::jsonEndTag(out);
+			Json<Stream>::jsonEndTag(out, true);
 	}
 
 
