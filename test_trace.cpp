@@ -59,7 +59,7 @@ TEST(TestGrammarVisualization, testRecursion) {
 
 	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {};
 	
-	struct ExprEof : PSeq<8, Expr, PEof> {};
+	struct ExprEof : PRequireEof<Expr> {};
 
 	Parse_result result = test_string<ExprEof>((Char_t *) "-1");
 	EXPECT_TRUE(result.success());

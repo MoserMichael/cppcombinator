@@ -59,7 +59,7 @@ TEST(TestGrammar, testRecursion) {
 
 	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {};
 	
-	struct ExprEof : PSeq<8, Expr, PEof> {};
+	struct ExprEof : PRequireEof<Expr> {};
 
 	Parse_result result = test_string<ExprEof>((Char_t *) "-1");
 	EXPECT_TRUE(result.success());
@@ -114,7 +114,7 @@ TEST(TestGrammar, testRegEx) {
 
 	struct Regex : PStar<1, PAny< 1, RegexSetWithOp, RegexNestedWithOp, RegexSetItemWithOp> > {};
 
-	struct RegexEof : PSeq<8, Regex, PEof> {};
+	struct RegexEof :  PRequireEof<Regex> {};
 
 	Parse_result result = test_string<RegexEof>((Char_t *) "ab");
 	EXPECT_TRUE(result.success());

@@ -165,16 +165,22 @@ private:
 // PEof - parse is ok if at end of input
 //
 
-struct PEof : ParserBase  {
+template<typename Type>
+struct PRequireEof : ParserBase  {
 
-		struct AstType : AstEntryBase {
-				AstType() : AstEntryBase(-1) {
-				}
+		const RuleId RULE_ID = Type::RULE_ID;
+
+		struct AstType : Type::AstType {
 		};
 
 
 		template<typename ParserBase>
 		static Parse_result  parse(ParserBase &base) {
+
+				Parse_result res = Type::parse(base);
+				if (!res.success_) {
+					return res;
+				}
 
 				Text_position start_pos = ParserBase::current_pos_and_inc_nesting(base);
 
@@ -187,27 +193,33 @@ struct PEof : ParserBase  {
 				Text_position end_pos = ParserBase::current_pos(base);
 
 				if (!nchar.first) {
-						ParserBase::dec_position_nesting(base);
 						return Parse_result{true, Position(end_pos), Position(end_pos) };
 				}
-
-				ParserBase::backtrack(base, start_pos);
 				return Parse_result{false, Position(end_pos), Position(end_pos) };
 		}
 
 #ifdef __PARSER_ANALYSE__
 		template<typename HelperType>
 		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
-			return true;
+			bool ret;
+			
+			helper.push_and_check(out, get_tinfo((Type *) nullptr), -1);
+
+			ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
+
+			helper.pop();
+
+			return ret;			
 		}
 
 		template<typename HelperType>
 		static bool can_accept_empty_input(HelperType *) {
+			//return Type::can_accept_empty_input<HelperType>();
 			return false;
 		}
 
-		
-#endif		
+	
+#endif
 
 		
 };
