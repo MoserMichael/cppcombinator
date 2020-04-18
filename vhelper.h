@@ -23,7 +23,7 @@ struct VisualizeTrace {
 
 		static void end_parsing(std::string &short_name, bool success,Text_position pos) {
 			nesting_ -= 1;
-			printf("(%03ld%send parsing: %s %s at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), success ? "SUCCESS" : "FAIL", pos.line_, pos.column_, pos.buffer_pos_ );
+			printf("(%03ld)%send parsing: %s %s at: (%d:%d offset: %ld)\n", nesting_, std::string( nesting_, ' ').c_str(), short_name.c_str(), success ? "SUCCESS" : "FAIL", pos.line_, pos.column_, pos.buffer_pos_ );
 		}
 
 		static void end_parsing_choice(std::string &short_name, bool success,Text_position pos, size_t index) {
