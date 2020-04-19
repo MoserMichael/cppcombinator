@@ -91,7 +91,119 @@ This should keep the lookahead buffer bounded for most cases. (however the looka
 
 # Rule reference
 
-TBD
+
+## Parser combinators
+
+Given any existing parsing types, a new parsing expression can be constructed using the following operators:
+
+
+### Ordered choice
+
+```
+template<RuleId ruleId, typename ...Types>
+struct PAny 
+```
+
+### Optional
+
+```
+template<RuleId ruleId, typename PType>
+struct POpt 
+```
+
+### Sequence
+
+```
+template<RuleId ruleId, typename ...Types>
+struct PSeq 
+```
+
+### Require end of file after parsing the input type.
+
+```
+template<typename Type>
+PRequireEof
+```
+
+### Parse repetition of term
+
+```
+template<RuleId ruleId, typename Type, int minOccurance = 0, int maxOccurance = 0>
+struct PRepeat
+```
+
+### Zero or more
+
+```
+template<RuleId ruleId, typename Type>
+struct PStar
+```
+
+### One or more
+
+```
+template<RuleId ruleId, typename Type>
+struct PPlus 
+``
+
+
+### parse type T with And Predicate LookaheadType
+
+```
+template<typename Type, typename LookaheadType>
+struct PWithAndLookahead `
+```
+### parse type T with Not Predicate LookaheadType
+
+
+```
+template<typename Type, typename LookaheadType>
+struct PWithNotLookahead
+```
+
+## Atomic parsers
+
+The following parser types consume terminal symbols
+
+### Fixed string token parser
+
+```
+template<RuleId ruleId, Char_t ...Cs>
+struct PTok : ParserBase  {
+```
+
+### Extension parser
+
+```
+enum class Char_checker_result {
+	error,
+	proceed,
+	acceptNow,
+	acceptUnget,
+};
+
+typedef Char_checker_result (PTokVar_cb_t) (Char_t current_char, bool iseof, Char_t *matched_so_far);
+
+
+template<RuleId ruleId, PTokVar_cb_t checker, bool canAcceptEmptyInput = false>
+struct PTokVar : ParserBase  { 	
+```
+
+### Parse unsigned integer (sequence of digits)
+
+```
+template<RuleId ruleId>
+struct PTokInt : PTokVar<ruleId, pparse_is_digit>  { 
+}
+```
+
+### parse a single printable digit
+
+```
+template<RuleId ruleId>
+struct PTokChar 
+```
+
 
 # Validation of grammar
 
