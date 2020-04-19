@@ -89,7 +89,7 @@ This parser library has one optimization for the read ahea buffer: if one is par
 In the previous example the following rule is a top level rule PAny<15, PSeq<16, MultExpr, Add, Expr >, MultExpr>   - it stands for a repetition of a choice of either one of: MultExpr or the nested sequence PSeq<16, MultExpr, Add, Expr >. For each instances after the first repetition has been parsed we can discard all input up to that point.
 This should keep the lookahead buffer bounded for most cases. (however the lookahead buffer will be reallocated if you really need a larger buffer).
 
-# Rule reference
+#Parser reference
 
 
 ## Parser combinators
@@ -110,12 +110,39 @@ struct PAny
 template<RuleId ruleId, typename PType>
 struct POpt 
 ```
+The nested AST type (POpt::AstType) looks as follows
+
+```
+	using PTypePtr = typename std::unique_ptr<typename PType::AstType>;  
+
+	using OptionType = std::optional< PTypePtr >;
+
+	struct AstType : AstEntryBase {
+			AstType() : AstEntryBase(ruleId) {
+			}
+
+			OptionType entry_;
+	};
+
+```
+
 
 ### Sequence
 
 ```
 template<RuleId ruleId, typename ...Types>
 struct PSeq 
+```
+
+The nested AST type looks as follows
+
+```
+	struct AstType : AstEntryBase {
+			AstType() : AstEntryBase(ruleId) {
+			}
+
+			std::tuple<typename std::unique_ptr<typename Types::AstType>...> entry_;
+	};
 ```
 
 ### Require end of file after parsing the input type.
@@ -125,12 +152,16 @@ template<typename Type>
 PRequireEof
 ```
 
+The AST of the type Type is forwarded by this parser.
+
 ### Parse repetition of term
 
 ```
 template<RuleId ruleId, typename Type, int minOccurance = 0, int maxOccurance = 0>
 struct PRepeat
 ```
+
+The AST of the type Type is forwarded by this parser.
 
 ### Zero or more
 
@@ -139,12 +170,17 @@ template<RuleId ruleId, typename Type>
 struct PStar
 ```
 
+The AST of the type Type is forwarded by this parser.
+
 ### One or more
 
 ```
 template<RuleId ruleId, typename Type>
 struct PPlus 
-``
+```
+
+The AST of the type Type is forwarded by this parser.
+
 
 
 ### parse type T with And Predicate LookaheadType
@@ -153,6 +189,10 @@ struct PPlus
 template<typename Type, typename LookaheadType>
 struct PWithAndLookahead `
 ```
+
+The AST of the type Type is forwarded by this parser.
+
+
 ### parse type T with Not Predicate LookaheadType
 
 
@@ -160,6 +200,9 @@ struct PWithAndLookahead `
 template<typename Type, typename LookaheadType>
 struct PWithNotLookahead
 ```
+
+The AST of the type Type is forwarded by this parser.
+
 
 ## Atomic parsers
 
@@ -184,10 +227,22 @@ enum class Char_checker_result {
 
 typedef Char_checker_result (PTokVar_cb_t) (Char_t current_char, bool iseof, Char_t *matched_so_far);
 
-
+a
 template<RuleId ruleId, PTokVar_cb_t checker, bool canAcceptEmptyInput = false>
 struct PTokVar : ParserBase  { 	
 ```
+
+The nested AST type of this parser includes the parsed expression is string entry_.
+
+```
+		struct AstType : AstEntryBase {
+				AstType() : AstEntryBase(ruleId) {
+				}
+
+				std::string entry_;
+		};
+```
+
 
 ### Parse unsigned integer (sequence of digits)
 
