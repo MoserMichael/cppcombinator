@@ -109,6 +109,7 @@ Then to call the parser:
 Note that the parse call is instantiated with the top level rule of your grammar.
 the result object has res.success() - this should be true if the input text has been parsed successfully. It not then res.get_start_pos() returns the line and column of the error. If parsing succeed then res.get_ast() returns the Ast type that stands for the parsed output, res.get_start_pos() and res.get_end_pos() are the location of the beginning and and of the parsed structure.
 
+Note that a CharParser is wrapping the text stream object: this way it is possible to craft a base parser for a particular grammar that consumes comments, in that case comments will not have to be dealt with by the grammar.
 
 # Bounded buffer
 
