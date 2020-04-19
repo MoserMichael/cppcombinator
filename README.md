@@ -1,6 +1,33 @@
 
 # cppcombinator
 
+- [cppcombinator](#cppcombinator)
+- [Introduction](#introduction)
+- [Bounded buffer](#bounded-buffer)
+- [Parser reference](#parser-reference)
+  * [Parser combinators](#parser-combinators)
+    + [Ordered choice](#ordered-choice)
+    + [Optional](#optional)
+    + [Sequence](#sequence)
+    + [Require end of file after parsing the input type.](#require-end-of-file-after-parsing-the-input-type)
+    + [Parse repetition of term](#parse-repetition-of-term)
+    + [Zero or more](#zero-or-more)
+    + [One or more](#one-or-more)
+    + [parse type T with And Predicate LookaheadType](#parse-type-t-with-and-predicate-lookaheadtype)
+    + [parse type T with Not Predicate LookaheadType](#parse-type-t-with-not-predicate-lookaheadtype)
+  * [Atomic parsers](#atomic-parsers)
+    + [Fixed string token parser](#fixed-string-token-parser)
+    + [Extension parser](#extension-parser)
+    + [Parse unsigned integer (sequence of digits)](#parse-unsigned-integer--sequence-of-digits-)
+    + [parse a single printable digit](#parse-a-single-printable-digit)
+- [Validation of grammar](#validation-of-grammar)
+- [Dumping of abstract syntax tree to json.](#dumping-of-abstract-syntax-tree-to-json)
+- [Tracing](#tracing)
+- [What i learned from all this](#what-i-learned-from-all-this)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
+
 This library is a parser and AST (abstract syntax tree) generator written in C++17.
 The library is a header only c++17 library. 
 
