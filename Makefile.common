@@ -1,0 +1,38 @@
+
+TEST_FILES=test/test_stream.cpp \
+		   test/test_rules.cpp \
+		   test/test_grammar.cpp \
+		   test/test_trace.cpp \
+		   test/test_analyse.cpp \
+		   test/test_pascal.cpp \
+		   test/test_main.cpp
+
+TEST_OBJS:=$(subst .cpp,.o,$(TEST_FILES))
+
+LINK_OBJS:=$(patsubst %.cpp,$(OBJ_DIR)/%.o,$(TEST_FILES))
+
+.PHOHY: all
+all : $(EXE)
+
+
+.PHONY: make-obj-dir
+make-obj-dir:
+	@mkdir -p $(OBJ_DIR)/test
+
+test-clang:  make-obj-dir $(LINK_OBJS)
+	$(COMP) -g -o test-clang  $(LINK_OBJS) $(LD_OPTS)
+
+test-gcc :  make-obj-dir $(LINK_OBJS)
+	$(COMP) -g -o test-gcc  $(LINK_OBJS) $(LD_OPTS)
+
+.PHONY: test
+test : $(EXE) 
+	@echo "test with $(COMPI)"
+	./$(EXE)
+
+.PHONY: clean
+clean :
+	rm -rf $(OBJ_DIR) $(EXE) 
+
+$(OBJ_DIR)/%.o:  %.cpp
+	$(COMP) $(CPP_OPTS) -Iinc -c $< -o $@
