@@ -134,7 +134,7 @@ template<RuleId ruleId, typename ...Types>
 struct PSeq 
 ```
 
-The nested AST type looks as follows
+The nested AST type (PSeq::Asttype) looks as follows
 
 ```
 	struct AstType : AstEntryBase {
@@ -227,7 +227,6 @@ enum class Char_checker_result {
 
 typedef Char_checker_result (PTokVar_cb_t) (Char_t current_char, bool iseof, Char_t *matched_so_far);
 
-a
 template<RuleId ruleId, PTokVar_cb_t checker, bool canAcceptEmptyInput = false>
 struct PTokVar : ParserBase  { 	
 ```
