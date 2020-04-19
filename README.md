@@ -243,6 +243,16 @@ template<RuleId ruleId, Char_t ...Cs>
 struct PTok : ParserBase  {
 ```
 
+Note that this parser receives a sequence of characters, as currrently there is no way to instantiate a template with a string constant (that feature was added in c++20).
+However thre are macros that expand an argument string into a character sequence:
+
+Example uage:
+```
+PTok<1,CSTR2("if")>
+PTok<3,CSTR4("else)>
+PTok<4,CSTR5("while)>
+```
+
 ### Extension parser
 
 ```
