@@ -627,3 +627,7 @@ A surprising thing is that [member templates](https://en.cppreference.com/w/cpp/
 Also the parser visualization feature of this projects shows that PEG grammars really do an enormous amount of backtracking; If you need a very performant parser then you should probably stick with lex and yacc - here you get something without backtracking, however the process of writing a grammar in lex and yacc is a really complicated business. Writing a PEG grammar is much easier, and more flexible in terms of the grammar that is accepted.
 
 Also i learned a few things from looking at the [PEGTL](https://github.com/taocpp/PEGTL) project. Thanks and acknowledgements.
+
+# License
+
+This code is licensed under both MIT and GPLv2 licenses. Pick any license that you like.
