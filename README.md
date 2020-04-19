@@ -68,6 +68,7 @@ Then to call the parser:
 	Parse_result res = ExprEof::parse(chparser);
 ```	
 
+Note that the parse call is instantiated with the top level rule of your grammar.
 the result object has res.success() - this should be true if the input text has been parsed successfully. It not then res.get_start_pos() returns the line and column of the error. If parsing succeed then res.get_ast() returns the Ast type that stands for the parsed output, res.get_start_pos() and res.get_end_pos() are the location of the beginning and and of the parsed structure.
 
 
@@ -88,9 +89,10 @@ To enable this feature you need to place #define __PARSER_ANALYSE__ before #incl
 
 Then call the analysis step with the following call
 ```
-	bool no_cycles = ParserChecker<Expr>::check(std::cout);
+	bool no_cycles = ParserChecker<ExprEof>::check(std::cout);
 	EXPECT_TRUE(no_cycles);
 ```
+Note that the check call is instantiated with the top level rule of your grammar.
 It even tells you what is causing the left recursion, the error is written on the stream that is passed as argument to the check function
 
 # Dumping of abstract syntax tree to json.
