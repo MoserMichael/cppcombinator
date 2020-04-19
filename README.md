@@ -19,7 +19,7 @@
     + [Fixed string token parser](#fixed-string-token-parser)
     + [Extension parser](#extension-parser)
     + [Parse unsigned integer (sequence of digits)](#parse-unsigned-integer--sequence-of-digits-)
-    + [parse a single printable digit](#parse-a-single-printable-digit)
+    + [parse a single printable character](#parse-a-single-printable-character)
 - [Validation of grammar](#validation-of-grammar)
 - [Dumping of abstract syntax tree to json.](#dumping-of-abstract-syntax-tree-to-json)
 - [Tracing](#tracing)
@@ -296,7 +296,7 @@ struct PTokInt : PTokVar<ruleId, pparse_is_digit>  {
 }
 ```
 
-### parse a single printable digit
+### parse a single printable character
 
 ```
 template<RuleId ruleId>
