@@ -28,15 +28,15 @@
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
 
 
+
+# Introduction
+
 This library is a parser and AST (abstract syntax tree) generator written in C++17.
 The library is a header only c++17 library. 
 
 The generated parser is a [PEG grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
 
 It has some advanced features such as grammar validation and tracing of the parser in action. 
-
-
-# Introduction
 
 To use this library #include "parse.h" - the classes of this library are in namespace pparse.
 
