@@ -53,7 +53,17 @@ To call the parser you first need to create an input stream object.
 
 ```
 	bool isok = text_stream.open("input_file.txt");
-	EXPECT_EQ(isok, true);a
+
+or
+
+	fd = open("input_file",O_RDONLY);
+	bool isok = text_stream.open(fd);
+
+or you can create it with invalid file descriptor and feed it input by yourself:
+
+	bool isok = text_stream.open(-1);
+	isok = text_stream.write_tail(test_string, strlen(test_string) );
+
 
 ```
 
