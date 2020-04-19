@@ -102,6 +102,8 @@ You can dump the ast into json:
 ```
 	ExprEof::dumpJson(std::cout, (ExprEof::AstType *) result.get_ast() );
 ```
+please note that this feature requires RTTI support enabled.
+
 
 
 # Tracing
@@ -110,7 +112,7 @@ You can trace the running of the parser, this can be quite usefull for debugging
 To do you need to place #define  __PARSER_TRACE__ right before #include "parse.h"
 
 The execution trace is dumpedto standard output and looks like this:
-(please note that this feature requires RTTI support enabled)
+Please note that this feature requires RTTI support enabled.
 
 ```
 (000)start parsing: PAny<7, pparse::PSeq<6>  MultExpr> at: (1:0 offset: 0)
