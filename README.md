@@ -89,7 +89,7 @@ This parser library has one optimization for the read ahea buffer: if one is par
 In the previous example the following rule is a top level rule PAny<15, PSeq<16, MultExpr, Add, Expr >, MultExpr>   - it stands for a repetition of a choice of either one of: MultExpr or the nested sequence PSeq<16, MultExpr, Add, Expr >. For each instances after the first repetition has been parsed we can discard all input up to that point.
 This should keep the lookahead buffer bounded for most cases. (however the lookahead buffer will be reallocated if you really need a larger buffer).
 
-#Parser reference
+# Parser reference
 
 
 ## Parser combinators
