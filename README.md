@@ -218,7 +218,8 @@ template<typename Type, typename LookaheadType>
 struct PWithAndLookahead `
 ```
 
-The AST of the type Type is forwarded by this parser.
+parsing is successfull if T parses, on condition that it is followed by input parsed by LookaheadType.
+The AST of the type Type is forwarded by this parser. The AST object generated upon parsing by LookaheadType is discarded.
 
 
 ### parse type T with Not Predicate LookaheadType
@@ -229,7 +230,8 @@ template<typename Type, typename LookaheadType>
 struct PWithNotLookahead
 ```
 
-The AST of the type Type is forwarded by this parser.
+parsing is successfull if T parses, on condition that it is not followed by input parsed by LookaheadType.
+The AST of the type Type is forwarded by this parser. The AST object generated upon parsing by LookaheadType is discarded. 
 
 
 ## Atomic parsers
