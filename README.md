@@ -161,7 +161,7 @@ template<RuleId ruleId, typename ...Types>
 struct PSeq 
 ```
 
-The nested AST type (PSeq::Asttype) looks as follows
+The nested AST type (PSeq::AstType) looks as follows
 
 ```
 	struct AstType : AstEntryBase {
