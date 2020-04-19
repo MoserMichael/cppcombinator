@@ -36,7 +36,7 @@ The library is a header only c++17 library.
 
 The generated parser is a [PEG grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
 
-It has some advanced features such as grammar validation and tracing of the parser in action. 
+ repetition parser (likeIt has some advanced features such as grammar validation and tracing of the parser in action. 
 
 To use this library #include "parse.h" - the classes of this library are in namespace pparse.
 
@@ -181,6 +181,9 @@ PRequireEof
 ```
 
 The AST of the type Type is forwarded by this parser.
+
+Note that this is the only parser that doesn't backtrack if parsing of Type fails.
+This is done on purpose - if the nested parser is a repetition parser (like zero or more or one or more), then each instance of the nested parser will advance the input and discard the buffer upon parsing an instance of the term (see Bounded Buffer section)
 
 ### Parse repetition of term
 
