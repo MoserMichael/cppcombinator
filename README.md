@@ -47,6 +47,7 @@ Each grammar rule (like struct Expr : PAny&lt;12, Int, NetagiveInt, NestedExpr&g
 that is produced by the parser on successfull parsing of the input text. This ast type uses c++17 helper objects for its representation, for example the PAny&lt;ruleId,Parser1,Parser2...&gt; parser uses std::variant to stand for any one of the argument types Parser1, Parser2 ... while PSeq&lt;ruleId,Parser1,Parser2&gt; uses std::tuple for the sequence of the argument parsers.
 
 Please note that the first argument of each rule is an integer constant that identifies the parser type - the rule id is returned from each ast type with getRuleId();
+Note that for a real gramar you should proabably define an enumeration and use the enumeration values instead of integer constants.
 
 To call the parser you first need to create an input stream object.
 
