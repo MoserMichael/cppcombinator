@@ -222,9 +222,6 @@ struct PRequireEof : ParserBase  {
 // Token parser 
 //
 
-
-
-
 #define CSTR1(str)  str[0]
 #define CSTR2(str)  str[0], str[1]
 #define CSTR3(str)  str[0], str[1], str[2]
@@ -275,7 +272,6 @@ struct PTok : ParserBase  {
 
 				if (! parse_helper<ParserBase,Cs...>(base)) {
 					ParserBase::backtrack(base, start_pos);
-					//Text_position end_pos = ParserBase::current_pos(base);
 
 #ifdef __PARSER_TRACE__
 					VisualizeTrace<ThisClass>::end_parsing(short_name, false, ParserBase::current_pos(base));
@@ -472,7 +468,6 @@ struct PTokVar : ParserBase  {
 			Json<Stream>::dumpRule(out, RULE_ID,"PTokVar" );
 
 			//? extract the name of the callback function from type signature ?
-			//
 			Json<Stream>::jsonAddField(out, "token", ast->entry_.c_str(), true);
 
 			Json<Stream>::jsonEndTag(out, true);
@@ -512,20 +507,6 @@ struct PTokChar : PTokVar<ruleId,parse_print_char>  {
 
 
 
-//inline bool pparse_regex_char(Char_t current_char, Char_t *matched_so_far) {
-//	return isprint((char) current_char) && strchr(current_char,"+-*()") == 0;
-//}
-//
-
-// 
-// PTokInt - sequence of digites
-//
-//template<RuleId ruleId>
-//struct PTokRegexChar : PTokVar<ruleId, pparse_regex_char>  { 
-//};
-//
-
-
 //
 //  PAny - ordered choice parser combinator
 //
@@ -550,8 +531,6 @@ struct PAny : ParserBase  {
     template<typename ParserBase>
 	static Parse_result  parse(ParserBase &base) {
 
-//		Text_position start_pos = ParserBase::current_pos(base); 
-
 		Position error_pos;
 
 #ifdef __PARSER_TRACE__
@@ -562,10 +541,6 @@ struct PAny : ParserBase  {
 		auto ast = std::make_unique<AstType>(); 
 
 		Parse_result res = parse_helper<0,ParserBase,Types...>(base, ast.get(), error_pos); 
-
-//		if (!res.success_) {
-//			ParserBase::backtrack(base, start_pos);
-//		} 
 
 #ifdef __PARSER_TRACE__
 		VisualizeTrace<ThisClass>::end_parsing_choice(short_name, res.success_, ParserBase::current_pos(base), ast.get()->entry_.index());
@@ -673,7 +648,6 @@ private:
 				std::stringstream sout;
 
 				if (ast->entry_.index() == FieldIndex) {
-					//const TypePtr *ptr = nullptr; //std::get<Index>( ast->entry_ ).get();
 					sout << FieldIndex;
 					std::string sval(sout.str());
 
@@ -723,8 +697,6 @@ struct POpt : ParserBase  {
     template<typename ParserBase>
 	static Parse_result  parse(ParserBase &base) {
 
-//		Text_position start_pos = ParserBase::current_pos(base); 
-
 #ifdef __PARSER_TRACE__
 		Text_position start_pos = ParserBase::current_pos(base); 
 		std::string short_name = VisualizeTrace<ThisClass>::trace_start_parsing(start_pos);
@@ -742,11 +714,6 @@ struct POpt : ParserBase  {
 			rval->start_ = res.start_;
 			rval->end_ = res.end_;
 		}
-//		if (!res.success_) {
-//			ParserBase::backtrack(base, start_pos);
-//			res.end_ = res.start_ = res.start_;
-//		} 
-//
 		res.success_ = true;
 		res.ast_.reset( ast.release() );
 
@@ -881,10 +848,7 @@ private:
 					Json<Stream>::jsonEndNested(stream,false);
 
 					return dump_helper<FieldIndex+1, Stream, PTypes...>( stream, ast );
-				} else {
-					//PType::dumpJson(stream, std::get<FieldIndex>( ast->entry_ ).get(), true);
-				}
-
+				} 
 
 				return true;
 		} 
@@ -1077,12 +1041,11 @@ private:
 		}
 
 		template<typename HelperType>
-		static bool can_accept_empty_input(HelperType *) {
+		static bool can_accept_empty_input(HelperType *arg) {
 			if constexpr (minOccurance  == 0) {
 				return true;
 			}
-			//return Type::can_accept_empty_input<HelperType>();
-			return false;
+			return Type::can_accept_empty_input(arg);
 		}
 #endif		
 };
@@ -1176,9 +1139,8 @@ struct PWithAndLookaheadImpl : ParserBase {
 		}
 
 		template<typename HelperType>
-		static bool can_accept_empty_input(HelperType *) {
-			//return Type::can_accept_empty_input<HelperType>();
-			return false;
+		static bool can_accept_empty_input(HelperType *arg) {
+			return Type::can_accept_empty_input(arg);
 		}
 
 	
