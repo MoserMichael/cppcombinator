@@ -411,4 +411,6 @@ Please note that this feature requires RTTI support enabled.
 i learned that most of additions in c++17 are tooled toward template metaprogramming: things like std::tuple and std::variant are very useful in this context.
 i think template metaprogramming is now a doable thing ever since c++17; it takes some time to get used to the concept - this project has helped me to learn this approach well, i think.
 
-A surprising thing is that [member templates](https://en.cppreference.com/w/cpp/language/member_template) let you do recursive definition, that's because of the lazy natue of template instantiation in c++. You never stop learning with c++.
+A surprising thing is that [member templates](https://en.cppreference.com/w/cpp/language/member_template) let you do recursive definition, that's because of the lazy natue of template instantiation in c++. You never stop learning with c++. 
+
+Also the parser visualization feature of this projects shows that PEG grammars really do an enormous amount of backtracking; If you need a very performant parser then you should probably stick with lex and yacc - here you get something without backtracking, however the process of writing a grammar in lex and yacc is a really complicated business.
