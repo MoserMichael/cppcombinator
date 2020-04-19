@@ -394,4 +394,4 @@ The execution trace is dumpedto standard output and looks like this:
 # What i learned from all this
 
 i learned that most of additions in c++17 are tooled toward template metaprogramming: things like std::tuple and std::variant are very useful in this context.
-
+i think template metaprogramming is now a doable thing ever since c++17; it takes some time to get used to the concept - this project has helped me to learn this approach well, i think.

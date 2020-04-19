@@ -60,21 +60,21 @@ TEST(TestGrammar, testRecursion) {
 
 	struct Mult : PAny<2, PTok<3,CSTR1("*")>, PTok<4,CSTR1("/")> > {};
 
-	struct Add : PAny<5, PTok<6,CSTR1("+")>, PTok<7,CSTR1("-")> > {};
+	struct Add : PAny<4, PTok<5,CSTR1("+")>, PTok<6,CSTR1("-")> > {};
 
-	struct NestedExpr : PSeq<8, PTok<0, CSTR1("(")>, Expr, PTok<0, CSTR1(")")> > {};
+	struct NestedExpr : PSeq<7, PTok<8, CSTR1("(")>, Expr, PTok<9, CSTR1(")")> > {};
 
-	struct NegativeInt : PSeq<1, PTok<11, CSTR1("-")>, Int> {};
+	struct NegativeInt : PSeq<10, PTok<11, CSTR1("-")>, Int> {};
 
-	struct SimpleExpr : PAny<6, Int, NegativeInt, NestedExpr> {}; // 
+	struct SimpleExpr : PAny<12, Int, NegativeInt, NestedExpr> {}; // 
 
 	struct MultExpr;
 
-	struct MultExpr: PAny<7, PSeq<6, SimpleExpr, Mult, MultExpr >, SimpleExpr> {};
+	struct MultExpr: PAny<13, PSeq<14, SimpleExpr, Mult, MultExpr >, SimpleExpr> {};
 
 	struct Expr;
 
-	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {};
+	struct Expr: PAny<15, PSeq<16, MultExpr, Add, Expr >, MultExpr> {};
 	
 	struct ExprEof : PRequireEof<Expr> {};
 

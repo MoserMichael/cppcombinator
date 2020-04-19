@@ -1,7 +1,7 @@
 
-OBJ_DIR=.obj-clang
-COMP=clang
-EXE=test-clang
+OBJ_DIR:=.obj-clang
+COMP:=clang
+EXE:=test-clang
 
 #CPP_OPTS=-std=c++17  -pedantic -Wall -Wextra -Wshadow -Werror  
 CPP_OPTS=-g -std=c++17  -pedantic -Wall -Wshadow -Werror  
