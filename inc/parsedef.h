@@ -53,7 +53,16 @@ struct AstEntryBase {
 		return ruleId_;
 	}
 
- 
+	Position get_start_pos() const {
+		return start_;
+	}
+
+	Position get_end_pos() const {
+		return end_;
+	}
+
+	Position start_;
+	Position end_;
 	RuleId ruleId_;
 };
 

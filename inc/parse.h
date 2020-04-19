@@ -163,9 +163,7 @@ struct PRequireEof : ParserBase  {
 
 		static inline const RuleId RULE_ID = Type::RULE_ID;
 
-		struct AstType : Type::AstType {
-		};
-
+		using AstType = typename Type::AstType;
 
 		template<typename ParserBase>
 		static Parse_result  parse(ParserBase &base) {
@@ -250,7 +248,9 @@ struct PTok : ParserBase  {
 		using ThisClass = PTok<ruleId, Cs...>;
 
 		struct AstType : AstEntryBase {
-				AstType() : AstEntryBase(ruleId) {
+				AstType(Position start, Position end) : AstEntryBase(ruleId) {
+						start_ = start;
+						end_ = end;
 				}
 		};
 
@@ -297,7 +297,7 @@ struct PTok : ParserBase  {
 
 				end_pos.column_ -= 1;
 
-				return Parse_result{true, Position(token_start_pos), Position(end_pos), std::make_unique<AstType>() };
+				return Parse_result{true, Position(token_start_pos), Position(end_pos), std::make_unique<AstType>( Position(token_start_pos), Position(end_pos) ) };
 		}
 
 #ifdef __PARSER_ANALYSE__
@@ -418,15 +418,23 @@ struct PTokVar : ParserBase  {
 							case Char_checker_result::acceptNow: {
 									ast.get()->entry_ += (char) nchar.second;
 									Text_position end_pos = ParserBase::current_pos(base);
-									ParserBase::next_char(base);
-									return Parse_result{true, token_start_pos, end_pos, std::unique_ptr<AstEntryBase>(ast.release()) };	
+									ParserBase::next_char(base); 
+
+									AstEntryBase *ret = ast.release();
+									ret->start_ = token_start_pos;
+									ret->end_ = end_pos;
+									return Parse_result{true, token_start_pos, end_pos, std::unique_ptr<AstEntryBase>(ret) };	
+
 							}
 
 							case Char_checker_result::acceptUnget: {
 									Text_position end_pos = ParserBase::current_pos(base);
 									end_pos.column_ -= 1;
 
-									return Parse_result{true, token_start_pos, end_pos, std::unique_ptr<AstEntryBase>(ast.release()) };	
+									AstEntryBase *ret = ast.release();
+									ret->start_ = token_start_pos;
+									ret->end_ = end_pos;
+									return Parse_result{true, token_start_pos, end_pos, std::unique_ptr<AstEntryBase>(ret) };	
 							}
 
 						}
@@ -731,12 +739,14 @@ struct POpt : ParserBase  {
 			typename PType::AstType *ptr = (typename PType::AstType *) res.ast_.release();
 			AstType *rval = ast.get();
 			rval->entry_ = OptionType(PTypePtr(ptr));
+			rval->start_ = res.start_;
+			rval->end_ = res.end_;
 		}
-		if (!res.success_) {
+//		if (!res.success_) {
 //			ParserBase::backtrack(base, start_pos);
-			res.end_ = res.start_ = res.start_;
-		} 
-
+//			res.end_ = res.start_ = res.start_;
+//		} 
+//
 		res.success_ = true;
 		res.ast_.reset( ast.release() );
 
@@ -902,6 +912,8 @@ private:
 			return parse_helper<FieldIndex + 1, ParserBase, PTypes...>( base, ast, start_seq );
 		} 
 
+		ast->start_ = start_seq;
+		ast->end_ = res.end_;
 		return Parse_result{true, start_seq, res.end_};
     }
 
@@ -1043,7 +1055,10 @@ private:
 #endif
 
 		if (ast != nullptr) {
-			return Parse_result{true, Position(start_pos), Position(end_pos), std::unique_ptr<AstEntryBase>(ast->release()) };
+			AstType * ret = ast->release(); 
+			ret->start_ = Position(start_pos);
+			ret->end_ = Position(end_pos);
+			return Parse_result{true, Position(start_pos), Position(end_pos), std::unique_ptr<AstEntryBase>(ret) };
 		}
 		return Parse_result{true, Position(start_pos), Position(end_pos) };
 	}
@@ -1101,8 +1116,7 @@ struct PWithAndLookaheadImpl : ParserBase {
 		
 	static inline const RuleId RULE_ID = Type::RULE_ID;
 		
-	struct AstType : Type::AstType {
-	};
+	using AstType = typename Type::AstType;
 
     template<typename ParserBase>
 	static Parse_result  parse(ParserBase &base) {
