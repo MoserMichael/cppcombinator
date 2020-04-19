@@ -623,3 +623,5 @@ i think template metaprogramming is now a doable thing ever since c++17; it take
 A surprising thing is that [member templates](https://en.cppreference.com/w/cpp/language/member_template) let you do recursive definition, that's because of the lazy natue of template instantiation in c++. You never stop learning with c++. 
 
 Also the parser visualization feature of this projects shows that PEG grammars really do an enormous amount of backtracking; If you need a very performant parser then you should probably stick with lex and yacc - here you get something without backtracking, however the process of writing a grammar in lex and yacc is a really complicated business. Writing a PEG grammar is much easier, and more flexible in terms of the grammar that is accepted.
+
+Also i learned a few things from looking at the [PEGTL](https://github.com/taocpp/PEGTL) project. Thanks and acknowledgements.
