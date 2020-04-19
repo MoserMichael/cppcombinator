@@ -34,7 +34,7 @@
 This library is a parser and AST (abstract syntax tree) generator written in C++17.
 The library is a header only c++17 library. 
 
-The generated parser is a [PEG grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
+The generated parser implements a [PEG grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
 
  repetition parser (likeIt has some advanced features such as grammar validation and tracing of the parser in action. 
 
