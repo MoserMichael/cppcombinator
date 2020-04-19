@@ -71,7 +71,7 @@ Then to call the parser:
 the result object has res.success() - this should be true if the input text has been parsed successfully. It not then res.get_start_pos() returns the line and column of the error. If parsing succeed then res.get_ast() returns the Ast type that stands for the parsed output, res.get_start_pos() and res.get_end_pos() are the location of the beginning and and of the parsed structure.
 
 
-# bounded buffer
+# Bounded buffer
 
 This parser library has one optimization for the read ahea buffer: if one is parsing a top level rule then all input is discarded when the top level rule has been parsed:
 In the previous example the following rule is a top level rule PAny<15, PSeq<16, MultExpr, Add, Expr >, MultExpr>   - it stands for a repetition of a choice of either one of: MultExpr or the nested sequence PSeq<16, MultExpr, Add, Expr >. For each instances after the first repetition has been parsed we can discard all input up to that point.
@@ -99,7 +99,7 @@ You can dump the ast into json:
 
 ```
 	ExprEof::dumpJson(std::cout, (ExprEof::AstType *) result.get_ast() );
-/```
+```
 
 
 # Tracing
