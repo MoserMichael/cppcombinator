@@ -1,17 +1,19 @@
 #pragma once
 
-#include "parse_text.h"
 #include <memory>
 #include <list>
 #include <tuple>
 #include <variant>
+#include <optional>
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include "parse_text.h"
 #include "parsedef.h"
 #include "dhelper.h"
 #include "vhelper.h"
 #include "analyse.h"
 #include "json.h"
-#include <iostream>
-#include <sstream>
 
 namespace pparse {
 
