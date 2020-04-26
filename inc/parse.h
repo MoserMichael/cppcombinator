@@ -520,13 +520,13 @@ struct PAny : ParserBase  {
 		
     using ThisClass = PAny<ruleId, Types...>;
 
-	using VariantType = std::variant< std::unique_ptr<typename Types::AstType>...>;
+	//typedef VariantType  typename std::variant< typename std::unique_ptr<typename Types::AstType>...>;
 
 	struct AstType : AstEntryBase {
 			AstType() : AstEntryBase(ruleId) {
 			}
 
-			VariantType entry_;
+			std::variant< typename std::unique_ptr<typename Types::AstType>...> entry_;
 	};
 
 
@@ -590,6 +590,9 @@ private:
 		if (res.success_) {
 			if (res.ast_.get() != nullptr) {
 				typename PType::AstType *retAst = (typename PType::AstType *) res.ast_.release();
+				typedef typename std::variant< typename std::unique_ptr<typename Types::AstType>...> VariantType;
+
+
 				ast->entry_ = VariantType{ std::in_place_index<FieldIndex>, PTypePtr(retAst) };
 			}
 			return res;
