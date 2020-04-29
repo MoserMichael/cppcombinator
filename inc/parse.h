@@ -1,18 +1,19 @@
 #pragma once
 
-#include "parse_text.h"
 #include <memory>
 #include <list>
 #include <tuple>
 #include <variant>
 #include <optional>
+#include <iostream>
+#include <sstream>
+#include <cstring>
+#include "parse_text.h"
 #include "parsedef.h"
 #include "dhelper.h"
 #include "vhelper.h"
 #include "analyse.h"
 #include "json.h"
-#include <iostream>
-#include <sstream>
 
 namespace pparse {
 
@@ -519,13 +520,13 @@ struct PAny : ParserBase  {
 		
     using ThisClass = PAny<ruleId, Types...>;
 
-	using VariantType = std::variant< std::unique_ptr<typename Types::AstType>...>;
+	//typedef VariantType  typename std::variant< typename std::unique_ptr<typename Types::AstType>...>;
 
 	struct AstType : AstEntryBase {
 			AstType() : AstEntryBase(ruleId) {
 			}
 
-			VariantType entry_;
+			std::variant< typename std::unique_ptr<typename Types::AstType>...> entry_;
 	};
 
 
@@ -589,6 +590,9 @@ private:
 		if (res.success_) {
 			if (res.ast_.get() != nullptr) {
 				typename PType::AstType *retAst = (typename PType::AstType *) res.ast_.release();
+				typedef typename std::variant< typename std::unique_ptr<typename Types::AstType>...> VariantType;
+
+
 				ast->entry_ = VariantType{ std::in_place_index<FieldIndex>, PTypePtr(retAst) };
 			}
 			return res;

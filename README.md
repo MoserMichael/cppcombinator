@@ -7,8 +7,8 @@
 - [Parser reference](#parser-reference)
   * [Parser combinators](#parser-combinators)
     + [Ordered choice](#ordered-choice)
-    + [Optional](#optional)
     + [Sequence](#sequence)
+    + [Optional](#optional)
     + [Require end of file after parsing the input type.](#require-end-of-file-after-parsing-the-input-type)
     + [Parse repetition of term](#parse-repetition-of-term)
     + [Zero or more](#zero-or-more)
@@ -134,6 +134,29 @@ template<RuleId ruleId, typename ...Types>
 struct PAny 
 ```
 
+This type allows for recursive definitions, that means the argument types do not have to be defined when defining a PAny rule.
+
+### Sequence
+
+```
+template<RuleId ruleId, typename ...Types>
+struct PSeq 
+```
+
+The nested AST type (PSeq::AstType) looks as follows
+
+```
+	struct AstType : AstEntryBase {
+			AstType() : AstEntryBase(ruleId) {
+			}
+
+			std::tuple<typename std::unique_ptr<typename Types::AstType>...> entry_;
+	};
+```
+
+
+This type allows for recursive definitions, that means the argument types do not have to be defined when defining a PAny rule.
+
 ### Optional
 
 ```
@@ -157,24 +180,6 @@ The nested AST type (POpt::AstType) looks as follows
 ```
 
 
-### Sequence
-
-```
-template<RuleId ruleId, typename ...Types>
-struct PSeq 
-```
-
-The nested AST type (PSeq::AstType) looks as follows
-
-```
-	struct AstType : AstEntryBase {
-			AstType() : AstEntryBase(ruleId) {
-			}
-
-			std::tuple<typename std::unique_ptr<typename Types::AstType>...> entry_;
-	};
-```
-
 ### Require end of file after parsing the input type.
 
 ```
@@ -186,6 +191,9 @@ The AST of the type Type is forwarded by this parser.
 
 Note that this is the only parser that doesn't backtrack if parsing of Type fails.
 This is done on purpose - if the nested parser is a repetition parser (like zero or more or one or more), then each instance of the nested parser will advance the input and discard the buffer upon parsing an instance of the term (see Bounded Buffer section)
+
+
+Please note that the parser for this type must be declared after the declaration of the argument type Type. Forward declarations are not possible as the Ast type of the argument type is used as is.
 
 ### Parse repetition of term
 
