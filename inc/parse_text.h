@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include "parse_base.h"
+#include <memory.h>
 
 namespace pparse {
 

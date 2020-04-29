@@ -5,6 +5,7 @@
 #include <list>
 #include <tuple>
 #include <variant>
+#include <optional>
 #include "parsedef.h"
 #include "dhelper.h"
 #include "vhelper.h"
