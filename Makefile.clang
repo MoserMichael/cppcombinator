@@ -4,8 +4,12 @@ COMP:=clang
 EXE:=test-clang
 
 #CPP_OPTS=-std=c++17  -pedantic -Wall -Wextra -Wshadow -Werror  
-CPP_OPTS=-g -std=c++17  -pedantic -Wall -Wshadow -Werror -O3
+CPP_OPTS=-g -std=c++17  -pedantic -Wall -Wshadow -Werror
 LD_OPTS=-lstdc++ -lgtest -lpthread 
+
+ifeq ($(NO_OPT),)
+CPP_OPTS+=-O3
+endif
 
 
 -include Makefile.common
