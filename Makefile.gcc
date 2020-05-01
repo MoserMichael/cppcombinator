@@ -4,7 +4,7 @@ COMP:=gcc
 EXE:=test-gcc
 
 #CPP_OPTS=-std=c++17  -pedantic -Wall -Wextra -Wshadow -Werror  
-CPP_OPTS=-g -std=c++17  -pedantic -Wall -Wshadow -Werror 
+CPP_OPTS=-g -std=c++17  -pedantic -Wall -Wshadow -Werror -O3
 LD_OPTS=-lstdc++ -lgtest -lpthread 
 
 -include Makefile.common

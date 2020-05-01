@@ -20,7 +20,10 @@ bool runJq() {
 		int rcode = system("jq . <test.json");
 		return rcode == 0;
 	} else {
-		system("cat test.json");
+	    rt = system("cat test.json");
+        if (rt != 0) {
+            printf("can't run cat\n");;
+        }
 	}
 	return true;
 }
