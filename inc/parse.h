@@ -601,7 +601,7 @@ inline Char_checker_result parse_print_char(Char_t current_char, bool iseof, Cha
 // PTokPrintChar - single printable character
 //
 template<RuleId ruleId>
-struct PTokChar : PTokVar<ruleId,parse_print_char, PTokVarCheckTokenClash>  { 
+struct PTokChar : PTokVar<ruleId,parse_print_char>  { 
 };
 
 inline Char_checker_result pparse_identifier(Char_t current_char, bool iseof, Char_t *matched_so_far) {
@@ -616,14 +616,14 @@ inline Char_checker_result pparse_identifier(Char_t current_char, bool iseof, Ch
 	if (slen == 0) {
 		return isalpha(current_char) ? Char_checker_result::proceed : Char_checker_result::error;
 	}
-	return isalnum(current_char) ? Char_checker_result::proceed : Char_checker_result::acceptUnget;
+	return isalnum(current_char) || current_char == '_' ? Char_checker_result::proceed : Char_checker_result::acceptUnget;
 }
 
 //
 // PTokIdentifier
 //
 template<RuleId ruleId>
-struct PTokIdentifier : PTokVar<ruleId, pparse_identifier>  { 
+struct PTokIdentifierCStyle : PTokVar<ruleId, pparse_identifier, PTokVarCheckTokenClash>  { 
 };
 
 

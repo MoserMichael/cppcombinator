@@ -20,6 +20,7 @@
     + [Extension parser](#extension-parser)
     + [Parse unsigned integer (sequence of digits)](#parse-unsigned-integer--sequence-of-digits-)
     + [parse a single printable character](#parse-a-single-printable-character)
+    + [parse a cstyle identifier](#parse-a-cstyle-identifier)
 - [Validation of grammar](#validation-of-grammar)
 - [Dumping of abstract syntax tree to json.](#dumping-of-abstract-syntax-tree-to-json)
 - [Tracing](#tracing)
@@ -311,6 +312,16 @@ template<RuleId ruleId>
 struct PTokChar 
 ```
 
+### parse a cstyle identifier
+
+```
+template<RuleId ruleId>
+struct PTokIdentifierCStyle 
+```
+
+Parses an identifier that maches the following regex [a-zA-Z][a-zA-Z0-9\_]*
+Special care is taken that tokens that were accepted by PTok are not accepted as identifiers. 
+Please note that this trick works only if the top level parser is of type PRequireEof or of type PTopLevelParser.
 
 # Validation of grammar
 
