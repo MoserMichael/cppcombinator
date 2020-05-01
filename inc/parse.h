@@ -10,6 +10,7 @@
 #include <cstring>
 #include "parse_text.h"
 #include "parsedef.h"
+#include "tokencollisionhelper.h"
 #include "dhelper.h"
 #include "vhelper.h"
 #include "analyse.h"
@@ -79,6 +80,10 @@ struct ParserBase {
 			return false;
 		}
 
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+	        ERROR("shouldn't get here");	
+        }
 #endif
 
 		template<typename Stream>
@@ -86,6 +91,17 @@ struct ParserBase {
 				ERROR("Not implemented\n");
 		}
 
+        void init_collission_checker() {
+            TokenCollisionChecker *ptr = new TokenCollisionChecker();
+            colission_checker_.reset( ptr );
+        }
+
+
+
+        std::unique_ptr<TokenCollisionChecker> colission_checker_;
+
+
+        //must not be a polymorphic type, is accessed from static stuff only. don't have virtual functions here.
 		//virtual ~ParserBase() {}
 };
 
@@ -150,10 +166,44 @@ struct CharParser : ParserBase {
 		static void dumpJson(Stream &out,  const AstType *) {
 		}
 
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+        }
 
 private:
 		Text_stream &text_;
 		Text_stream::Next_char_value ch_;
+};
+
+
+
+// PTopLevelParser  - top level parser, initialises the collision checker;
+// The collision checker is used to check that variables that have the string value of a token are not counted as a variable;
+// the parse method initialises the collision checker and attaches it to the base parser, and after using it it is deleted.
+//
+template<typename Type> 
+struct PTopLevelParser : ParserBase {
+
+		using AstType = typename Type::AstType;
+        using ThisClass = PTopLevelParser<Type>;
+
+		template<typename ParserBase>
+		static Parse_result  parse(ParserBase &base) {
+         
+                PTopLevelParser<Type>::init_collision_checker(base);
+                //Type::init_collision_checker(base);
+                return Type::parse(base);
+        }
+
+       	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+
+            base.init_collission_checker();
+            if (base.colission_checker_->insert_type_info(&typeid(ThisClass))) { 
+                Type::init_collision_checker(base);
+                base.colission_checker_->remove_type_info(&typeid(ThisClass));
+            }
+        }
 };
 
 //
@@ -161,7 +211,7 @@ private:
 //
 
 template<typename Type>
-struct PRequireEof : ParserBase  {
+struct PRequireEof : PTopLevelParser<Type>  {
 
 		static inline const RuleId RULE_ID = Type::RULE_ID;
 
@@ -170,12 +220,12 @@ struct PRequireEof : ParserBase  {
 		template<typename ParserBase>
 		static Parse_result  parse(ParserBase &base) {
 
-				Parse_result res = Type::parse(base);
+				Parse_result res = PTopLevelParser<Type>::parse(base);
 				if (!res.success_) {
 					return res;
 				}
 
-				Char_value  nchar = ParserBase::current_char(base);
+                typename ParserBase::Char_value  nchar = ParserBase::current_char(base);
 				while (nchar.first && isspace(nchar.second)) { 
 						ParserBase::next_char(base);
 						nchar = ParserBase::current_char(base);
@@ -326,6 +376,13 @@ struct PTok : ParserBase  {
 		}
 
 
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+            std::string sval;
+            gather_token_value<Cs...>(sval);
+            base.colission_checker_->insert(sval.c_str(), sval.size() );
+        }
+
 private:
 		template<typename ParserBase, Char_t ch, Char_t ...Css>
 		static inline bool parse_helper( ParserBase &text ) {
@@ -354,6 +411,17 @@ private:
 				return true;
 		} 
 
+		template<Char_t ch, Char_t ...Css>
+		static inline bool gather_token_value(std::string &strval) {
+
+				strval += ch;
+
+				if constexpr (sizeof...(Css) > 0) {
+					return dump_helper<Css...>( strval );
+				}
+
+				return true;
+		} 
 
 
 };
@@ -372,10 +440,13 @@ enum class Char_checker_result {
 typedef Char_checker_result (PTokVar_cb_t) (Char_t current_char, bool iseof, Char_t *matched_so_far);
 
 
-template<RuleId ruleId, PTokVar_cb_t checker, bool canAcceptEmptyInput = false>
+const int PTokVarCanAcceptEmptyInput = 1;
+const int PTokVarCheckTokenClash = 2;
+
+template<RuleId ruleId, PTokVar_cb_t checker, int TokVarFlags = 0>
 struct PTokVar : ParserBase  { 
 		
-		using ThisClass = PTokVar<ruleId, checker, canAcceptEmptyInput>;
+		using ThisClass = PTokVar<ruleId, checker, TokVarFlags>;
 
 		static inline const RuleId RULE_ID = ruleId;
 
@@ -421,7 +492,11 @@ struct PTokVar : ParserBase  {
 									AstEntryBase *ret = ast.release();
 									ret->start_ = token_start_pos;
 									ret->end_ = end_pos;
-									return Parse_result{true, token_start_pos, end_pos, std::unique_ptr<AstEntryBase>(ret) };	
+ 
+                                    if (has_collision(base, ast.get()->entry_)) {
+				                        return Parse_result{false, token_start_pos, token_start_pos};
+                                    }
+            						return Parse_result{true, token_start_pos, end_pos, std::unique_ptr<AstEntryBase>(ret) };	
 
 							}
 
@@ -432,7 +507,11 @@ struct PTokVar : ParserBase  {
 									AstEntryBase *ret = ast.release();
 									ret->start_ = token_start_pos;
 									ret->end_ = end_pos;
-									return Parse_result{true, token_start_pos, end_pos, std::unique_ptr<AstEntryBase>(ret) };	
+		    					    
+                                    if (has_collision(base, ast.get()->entry_)) {
+				                        return Parse_result{false, token_start_pos, token_start_pos};
+                                    }
+                            		return Parse_result{true, token_start_pos, end_pos, std::unique_ptr<AstEntryBase>(ret) };	
 							}
 
 						}
@@ -460,7 +539,7 @@ struct PTokVar : ParserBase  {
 
 		template<typename HelperType>
 		static bool can_accept_empty_input(HelperType *) {
-			return  canAcceptEmptyInput;
+			return  TokVarFlags & PTokVarCanAcceptEmptyInput;
 		}
 
 #endif		
@@ -474,6 +553,24 @@ struct PTokVar : ParserBase  {
 
 			Json<Stream>::jsonEndTag(out, true);
 		}
+
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+        }
+
+        inline static bool has_collision(ParserBase &base, std::string &entry) {
+
+            if constexpr ((TokVarFlags & PTokVarCheckTokenClash) != 0) {
+                if (base.colission_checker_ != nullptr) {
+
+                    const Char_t *tok =  (const Char_t *) entry.c_str();
+                    int len = entry.size();
+
+                    return base.colission_checker_->has_token(tok, len);
+                }
+            }
+            return false;
+        }
 
 };
 
@@ -504,7 +601,29 @@ inline Char_checker_result parse_print_char(Char_t current_char, bool iseof, Cha
 // PTokPrintChar - single printable character
 //
 template<RuleId ruleId>
-struct PTokChar : PTokVar<ruleId,parse_print_char>  { 
+struct PTokChar : PTokVar<ruleId,parse_print_char, PTokVarCheckTokenClash>  { 
+};
+
+inline Char_checker_result pparse_identifier(Char_t current_char, bool iseof, Char_t *matched_so_far) {
+
+	ssize_t slen = strlen(matched_so_far);
+	if (iseof) {
+		if (slen >0) {
+			return Char_checker_result::acceptNow;
+		}
+	}
+
+	if (slen == 0) {
+		return isalpha(current_char) ? Char_checker_result::proceed : Char_checker_result::error;
+	}
+	return isalnum(current_char) ? Char_checker_result::proceed : Char_checker_result::acceptUnget;
+}
+
+//
+// PTokIdentifier
+//
+template<RuleId ruleId>
+struct PTokIdentifier : PTokVar<ruleId, pparse_identifier>  { 
 };
 
 
@@ -578,6 +697,16 @@ struct PAny : ParserBase  {
 
 			Json<Stream>::jsonEndTag(out, true);
 		}
+
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+
+            if (base.colission_checker_ != nullptr && base.colission_checker_->insert_type_info(&typeid(ThisClass))) { 
+                init_collision_checker_helper<ParserBase, Types...>(base);
+                base.colission_checker_->remove_type_info(&typeid(ThisClass));
+            }
+        }
+
 
 
 private:
@@ -674,6 +803,16 @@ private:
 				return true;
 		} 
 
+		template<typename ParserBase, typename PType, typename ...PTypes>
+        static void init_collision_checker_helper(ParserBase &base) {
+	
+                PType::init_collision_checker(base); 
+
+                if constexpr (sizeof...(PTypes) > 0) {
+					return init_collision_checker_helper<ParserBase, PTypes...>( base );
+                }
+        }
+ 
 };
 
 //
@@ -762,6 +901,17 @@ struct POpt : ParserBase  {
 			Json<Stream>::jsonEndTag(out, true);
 		}
 
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+            if (base.colission_checker_ != nullptr && base.colission_checker_->insert_type_info(&typeid(ThisClass))) { 
+                PType::init_collision_checker(base);
+                base.colission_checker_->remove_type_info(&typeid(ThisClass));
+            }
+        }
+
+
+
+private:
 
 };
 
@@ -840,6 +990,16 @@ struct PSeq : ParserBase  {
 
 			Json<Stream>::jsonEndTag(out, true);
 		}
+
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+            if (base.colission_checker_ != nullptr && base.colission_checker_->insert_type_info(&typeid(ThisClass))) { 
+                init_collision_checker_helper<ParserBase, Types...>(base);
+                base.colission_checker_->remove_type_info(&typeid(ThisClass));
+            }
+        }
+
+
 
 private:
 
@@ -922,6 +1082,16 @@ private:
 		}
 #endif		
 
+		template<typename ParserBase, typename PType, typename ...PTypes>
+        static void init_collision_checker_helper(ParserBase &base) {
+	
+                PType::init_collision_checker(base); 
+
+                if constexpr (sizeof...(PTypes) > 0) {
+					return init_collision_checker_helper<ParserBase, PTypes...>( base );
+				} 
+        }
+ 
 	
 };
 
@@ -969,6 +1139,15 @@ struct PRepeat : ParserBase {
 
 			Json<Stream>::jsonEndTag(out, true);
 	}
+
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+
+           if (base.colission_checker_ != nullptr && base.colission_checker_->insert_type_info(&typeid(ThisClass))) { 
+               Type::init_collision_checker(base);
+                base.colission_checker_->remove_type_info(&typeid(ThisClass));
+            }
+        }
 
 
 private:
@@ -1155,6 +1334,16 @@ struct PWithAndLookaheadImpl : ParserBase {
 		static void dumpJson(Stream &out,  const AstType *ast) {
 			Type::dumpJson(out, ast);		
 		}
+
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+
+           if (base.colission_checker_ != nullptr && base.colission_checker_->insert_type_info(&typeid(ThisClass))) { 
+                Type::init_collision_checker(base);
+                LookaheadType::init_collision_checker(base);
+                base.colission_checker_->remove_type_info(&typeid(ThisClass));
+            }
+        }
 
 	
 };
