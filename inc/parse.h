@@ -1009,8 +1009,33 @@ template<typename Type, typename LookaheadType>
 struct PWithNotLookahead: PWithAndLookaheadImpl<false, Type, LookaheadType> {
 };
 
+
+
+
 } // namespace pparse
 
 
 #include "parse_atomic.h"
+
+namespace pparse {
+
+
+//
+// PAndPredicate
+//
+
+template<typename Type>
+struct PAndPredicate :  PWithAndLookaheadImpl<true, PAlways<true>, Type> {
+};
+
+//
+// PNotPredicate
+//
+
+template<typename Type>
+struct PNotPredicate: PWithAndLookaheadImpl<false, PAlways<true>, Type> {
+};
+
+} // namespace pparse
+
 

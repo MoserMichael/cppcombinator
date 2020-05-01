@@ -359,6 +359,53 @@ template<RuleId ruleId>
 struct PTokIdentifierCStyle : PTokVar<ruleId, pparse_identifier, PTokVarCheckTokenClash>  { 
 };
 
+
+
+// 
+// Always acceot or reject any input
+//
+template<bool acceptOrReject>
+struct  PAlways { 
+        static inline const RuleId RULE_ID = 0;
+
+        using ThisClass = PAlways<acceptOrReject>;
+
+		struct AstType : AstEntryBase {
+				AstType() : AstEntryBase(RULE_ID) {
+				}
+        };
+
+		template<typename ParserBase>
+		static Parse_result  parse(ParserBase &base) {
+			Text_position token_start_pos = ParserBase::current_pos(base);
+		    return Parse_result{acceptOrReject, Position(token_start_pos), Position(token_start_pos), std::make_unique<AstType>( Position(token_start_pos), Position(token_start_pos) ) };
+		}
+
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+			return true;
+		}
+
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *) {
+			return  true;
+		}
+
+#endif		
+
+
+		template<typename Stream>
+		static void dumpJson(Stream &out,  const AstType *ast) {
+		}
+
+     	template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+        }
+
+};
+
+
 } // namespace pparse
 
 
