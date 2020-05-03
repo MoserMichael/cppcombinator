@@ -34,9 +34,9 @@ Parse_result test_string(Char_t *test_string) {
 
 }
  
-[[maybe_unused]] inline Char_checker_result pparse_pascal_identifier(Char_t current_char, bool iseof, Char_t *matched_so_far) {
+[[maybe_unused]] inline Char_checker_result pparse_pascal_identifier(Char_t current_char, bool iseof, std::string &matched_so_far) {
 
-	ssize_t slen = strlen(matched_so_far);
+	ssize_t slen = matched_so_far.size();
 	if (iseof) {
 		if (slen >0) {
 			return Char_checker_result::acceptNow;
@@ -54,9 +54,9 @@ struct PascalIdentifier : PTokVar<ruleId, pparse_pascal_identifier>  {
 };
 
 
-[[maybe_unused]] inline Char_checker_result pparse_pascal_string(Char_t current_char, bool iseof, Char_t *matched_so_far) {
+[[maybe_unused]] inline Char_checker_result pparse_pascal_string(Char_t current_char, bool iseof, std::string &matched_so_far) {
 	
-	ssize_t slen = strlen(matched_so_far);
+	ssize_t slen = matched_so_far.size();
 
 	if (iseof) {
 		return Char_checker_result::error; 

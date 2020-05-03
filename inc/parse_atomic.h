@@ -170,7 +170,7 @@ enum class Char_checker_result {
 	acceptUnget,
 };
 
-typedef Char_checker_result (PTokVar_cb_t) (Char_t current_char, bool iseof, Char_t *matched_so_far);
+typedef Char_checker_result (PTokVar_cb_t) (Char_t current_char, bool iseof, std::string &matched_so_far);
 
 
 const int PTokVarCanAcceptEmptyInput = 1;
@@ -206,7 +206,7 @@ struct PTokVar : ParserBase  {
 				while( nchar.first ) {
 
 						nchar = ParserBase::current_char(base);
-						Char_checker_result res = checker(nchar.second, !nchar.first, (Char_t *) ast.get()->entry_.c_str());
+						Char_checker_result res = checker(nchar.second, !nchar.first, ast.get()->entry_);
 						switch(res) {
 
 							case Char_checker_result::proceed:
@@ -307,12 +307,12 @@ struct PTokVar : ParserBase  {
 
 };
 
-inline Char_checker_result pparse_is_digit(Char_t current_char, bool iseof, Char_t *matched_so_far) {
+inline Char_checker_result pparse_is_digit(Char_t current_char, bool iseof, std::string &matched_so_far) {
 
 	if (!iseof && isdigit((char) current_char)) {
 		return Char_checker_result::proceed;
 	}
-	if (strlen(matched_so_far) == 0) {
+	if (matched_so_far.size() == 0) {
 		return Char_checker_result::error;
 	}
 	return Char_checker_result::acceptUnget;
@@ -326,8 +326,8 @@ struct PTokInt : PTokVar<ruleId, pparse_is_digit>  {
 };
 
 
-inline Char_checker_result parse_print_char(Char_t current_char, bool iseof, Char_t *matched_so_far) {
-	return !iseof && strlen(matched_so_far) == 0 && isprint((char) current_char) ? Char_checker_result::acceptNow : Char_checker_result::error;
+inline Char_checker_result parse_print_char(Char_t current_char, bool iseof, std::string &matched_so_far) {
+	return !iseof && matched_so_far.size() == 0 && isprint((char) current_char) ? Char_checker_result::acceptNow : Char_checker_result::error;
 }
 
 // 
@@ -337,9 +337,9 @@ template<RuleId ruleId>
 struct PTokChar : PTokVar<ruleId,parse_print_char>  { 
 };
 
-inline Char_checker_result pparse_identifier(Char_t current_char, bool iseof, Char_t *matched_so_far) {
+inline Char_checker_result pparse_identifier(Char_t current_char, bool iseof, std::string &matched_so_far) {
 
-	ssize_t slen = strlen(matched_so_far);
+	ssize_t slen = matched_so_far.size();
 	if (iseof) {
 		if (slen >0) {
 			return Char_checker_result::acceptNow;

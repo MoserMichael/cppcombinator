@@ -136,9 +136,9 @@ TEST(TestGrammar, testRecursion) {
 
 }
 
-inline Char_checker_result pparse_regex_char(Char_t current_char, bool iseof, Char_t *matched_so_far) {
+inline Char_checker_result pparse_regex_char(Char_t current_char, bool iseof, std::string &matched_so_far) {
 	return !iseof && 
-			strlen(matched_so_far) == 0  && 
+			matched_so_far.size() == 0  && 
 			isprint((char) current_char) && 
 			strchr("+-*()[].",current_char) == 0 ? Char_checker_result::acceptNow : Char_checker_result::error;
 }
