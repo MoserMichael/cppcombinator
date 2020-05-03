@@ -52,8 +52,8 @@ TEST(TestAnalyze, testCycle) {
 
 	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {}; 
 
-	bool no_cycles = ParserChecker<Expr>::check(std::cout);
-	EXPECT_TRUE(no_cycles);
+	bool  has_cycles = ParserChecker<Expr>::check(std::cout);
+	EXPECT_TRUE(has_cycles);
 
 //	
 //		CycleDetectorHelper helper;
@@ -93,8 +93,8 @@ TEST(TestAnalyze, testNoCycle) {
 	struct Expr: PAny<7, PSeq<6, MultExpr, Add, Expr >, MultExpr> {};
 	
 
-	bool no_cycles = ParserChecker<Expr>::check(std::cout);
-	EXPECT_FALSE(no_cycles);
+	bool has_cycles = ParserChecker<Expr>::check(std::cout);
+	EXPECT_FALSE(has_cycles);
 
 //		CycleDetectorHelper helper;
 //

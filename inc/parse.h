@@ -515,11 +515,11 @@ struct POpt : ParserBase  {
 
 #ifdef __PARSER_ANALYSE__
 		template<typename HelperType>
-		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+		static bool verify_no_cycles(HelperType *parg,CycleDetectorHelper &helper, std::ostream &out) {
 
 			helper.push_and_check(out, get_tinfo((PType *) nullptr), -1);
 
-			bool ret = PType::verify_no_cycles(helper, out) ;
+			bool ret = PType::verify_no_cycles(parg, helper, out) ;
 
 			helper.pop();
 
@@ -735,8 +735,6 @@ private:
 					return init_collision_checker_helper<ParserBase, PTypes...>( base );
 				} 
         }
- 
-	
 };
 
 
@@ -793,6 +791,27 @@ struct PRepeat : ParserBase {
             }
         }
 
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+
+			helper.push_and_check(out, get_tinfo((Type *) nullptr), -1);
+
+			bool ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
+
+			helper.pop();
+
+			return ret;			
+		}
+
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *arg) {
+			if constexpr (minOccurance  == 0) {
+				return true;
+			}
+			return Type::can_accept_empty_input(arg);
+		}
+#endif		
 
 private:
     template<typename ParserBase>
@@ -855,27 +874,6 @@ private:
 		return Parse_result{true, Position(start_pos), Position(end_pos) };
 	}
 	
-#ifdef __PARSER_ANALYSE__
-		template<typename HelperType>
-		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
-
-			helper.push_and_check(out, get_tinfo((Type *) nullptr), -1);
-
-			bool ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
-
-			helper.pop();
-
-			return ret;			
-		}
-
-		template<typename HelperType>
-		static bool can_accept_empty_input(HelperType *arg) {
-			if constexpr (minOccurance  == 0) {
-				return true;
-			}
-			return Type::can_accept_empty_input(arg);
-		}
-#endif		
 };
 
 //

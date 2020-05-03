@@ -82,8 +82,8 @@ struct PascalStringConst : PTokVar<ruleId, pparse_pascal_string>  {
 
 TEST(TestPascal, test) {
 	
-	//*** https://condor.depaul.edu/ichu/csc447/notes/wk2/pascal.html ***
-	
+   //*** https://condor.depaul.edu/ichu/csc447/notes/wk2/pascal.html ***
+        
 	struct Fraction :  PSeq<3, PTok<4,CSTR1(".")>, PTokInt<2> > {}; 
 	
 	struct Exponent  : PSeq<4, PTok<5,CSTR1("E")>, POpt<4, PAny<5, PTok<6, CSTR1("-")>, PTok<6, CSTR1("+")> > >, PTokInt<7> >  {};
