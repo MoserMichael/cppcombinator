@@ -244,7 +244,9 @@ struct PRequireEof : PTopLevelParser<Type>  {
 		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
 			bool ret;
 			
-			helper.push_and_check(out, get_tinfo((Type *) nullptr), -1);
+			if (!helper.push_and_check(out, get_tinfo((Type *) nullptr), -1)) {
+                return false;
+            }
 
 			ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
 
@@ -517,7 +519,9 @@ struct POpt : ParserBase  {
 		template<typename HelperType>
 		static bool verify_no_cycles(HelperType *parg,CycleDetectorHelper &helper, std::ostream &out) {
 
-			helper.push_and_check(out, get_tinfo((PType *) nullptr), -1);
+			if (!helper.push_and_check(out, get_tinfo((PType *) nullptr), -1)) {
+                return false;
+            }
 
 			bool ret = PType::verify_no_cycles(parg, helper, out) ;
 
@@ -795,7 +799,9 @@ struct PRepeat : ParserBase {
 		template<typename HelperType>
 		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
 
-			helper.push_and_check(out, get_tinfo((Type *) nullptr), -1);
+			if (!helper.push_and_check(out, get_tinfo((Type *) nullptr), -1)) {
+                return false;
+            }
 
 			bool ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
 
@@ -926,7 +932,41 @@ struct POnPreconditionFails {
 		return resT;
   	}
 
+#ifdef __PARSER_ANALYSE__
+		template<typename HelperType>
+		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
+			bool ret;
+			
+			if (!helper.push_and_check(out, get_tinfo((TPrecondition *) nullptr), -1)) {
+                return false;
+            }
 
+			ret = Type::verify_no_cycles((Type *) nullptr, helper, out) ;
+
+			helper.pop();
+
+			if (ret) {
+				
+                if (!helper.push_and_check(out, get_tinfo((Type *) nullptr), -1)) {
+                    return false;
+                }
+
+                ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
+
+                helper.pop();
+            }   
+
+			return ret;			
+		}
+
+		template<typename HelperType>
+		static bool can_accept_empty_input(HelperType *arg) {
+			return Type::can_accept_empty_input(arg);
+		}
+	
+#endif
+
+	
 };
 
 //
@@ -978,7 +1018,9 @@ struct PWithAndLookaheadImpl : ParserBase {
 		static bool verify_no_cycles(HelperType *,CycleDetectorHelper &helper, std::ostream &out) {
 			bool ret;
 			
-			helper.push_and_check(out, get_tinfo((Type *) nullptr), -1);
+			if (!helper.push_and_check(out, get_tinfo((Type *) nullptr), -1)) {
+                return false;
+            }
 
 			ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
 
@@ -988,7 +1030,9 @@ struct PWithAndLookaheadImpl : ParserBase {
 				
 				LookaheadType info;
 
-				helper.push_and_check(out, get_tinfo((LookaheadType *) nullptr), -1);
+				if (!helper.push_and_check(out, get_tinfo((LookaheadType *) nullptr), -1)) {
+                    return false;
+                }
 
 				ret = Type::verify_no_cycles((HelperType *) nullptr, helper, out) ;
 

@@ -59,7 +59,9 @@ struct ParserChecker {
 	static bool check(std::ostream &stream) {
 		CycleDetectorHelper helper;
 		
-		helper.push_and_check(stream, get_tinfo((Grammar *) nullptr), -1);
+		if (!helper.push_and_check(stream, get_tinfo((Grammar *) nullptr), -1)) {
+            return false;
+        }
 
 		bool ret = Grammar::verify_no_cycles((void *) nullptr, helper, stream);
 

@@ -43,12 +43,12 @@ struct TokenCollisionChecker {
 
     bool insert(const Char_t * token, uint32_t token_len) {
 
-        printf("Insert %s(%d)\n", token,token_len);
+        //printf("Insert %s(%d)\n", token,token_len);
 
         TokenHash hash = calculate_hash( token, token_len );
     
         if (has_token_imp(token, token_len, hash)) {
-            printf("already exists\n");
+            //printf("already exists\n");
             return true;
         }
 
