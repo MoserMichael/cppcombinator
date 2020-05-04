@@ -895,6 +895,41 @@ struct PPlus : PRepeat<ruleId, Type, 0, 0> {
 
 
 //
+// Parse TPrecondition, if parsing of TPrecondition fails then try to parse Type
+// if TPrecondition parses, backtrack and return failure.
+//
+template<typename TPrecondition, typename Type>
+struct POnPreconditionFails {
+
+    using ThisClass = POnPreconditionFails<TPrecondition, Type>;
+	
+	static inline const RuleId RULE_ID = Type::RULE_ID;
+	
+	using AstType = typename Type::AstType;
+
+    template<typename ParserBase>
+	static Parse_result  parse(ParserBase &base) {
+
+		Text_position start_pos = ParserBase::current_pos_and_inc_nesting(base);
+		Parse_result res = Type::parse(base);
+		if (res.success_) {
+            ParserBase::dec_position_nesting(base);
+            res.success_ = false; 
+			return res;
+		} 
+	    ParserBase::backtrack(base, start_pos);
+	
+		Parse_result resT = Type::parse(base);
+		if (!resT.success()) {
+			return Parse_result{false, res.start_, res.end_ };
+		}
+		return resT;
+  	}
+
+
+};
+
+//
 // PWithAndLookaheadImpl - implementation struct for lookahead parsers (don't use directly)
 //
 
@@ -915,7 +950,6 @@ struct PWithAndLookaheadImpl : ParserBase {
 		Parse_result res = Type::parse(base);
 		if (!res.success_) {
 			ParserBase::dec_position_nesting(base);
-//			ParserBase::backtrack(base, start_pos);
 			return res;
 		} 
 
