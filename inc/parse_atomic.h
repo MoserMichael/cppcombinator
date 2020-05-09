@@ -150,7 +150,7 @@ private:
 				strval += ch;
 
 				if constexpr (sizeof...(Css) > 0) {
-					return dump_helper<Css...>( strval );
+					return gather_token_value<Css...>( strval );
 				}
 
 				return true;

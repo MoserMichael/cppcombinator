@@ -966,6 +966,10 @@ struct POnPreconditionFails {
 	
 #endif
 
+        template<typename ParserBase>
+        static void init_collision_checker(ParserBase &base) {
+                Type::init_collision_checker(base); 
+        }
 	
 };
 
