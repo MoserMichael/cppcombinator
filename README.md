@@ -23,7 +23,7 @@
     + [parse a cstyle identifier](#parse-a-cstyle-identifier)
 - [Validation of grammar](#validation-of-grammar)
 - [Dumping of abstract syntax tree to json.](#dumping-of-abstract-syntax-tree-to-json)
-- [Tracing](#tracing)
+- [Tracing the generated parser](#tracing)
 - [What i learned from all this](#what-i-learned-from-all-this)
 
 <small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
@@ -32,25 +32,74 @@
 
 # Introduction
 
-This library is a parser and AST (abstract syntax tree) generator written in C++17.
-The library is a header only c++17 library. 
+This library is a header only C++17 template library.
 
-The generated parser implements a [PEG grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar)
+The library provides template classes for building top-down [PEG parser](https://en.wikipedia.org/wiki/Parsing_expression_grammar), the parsers build an in-memory parse tree,
+Each template instantiation stands for a grammar rule, which translates directly into a node in the parse tree.
 
- repetition parser (likeIt has some advanced features such as grammar validation and tracing of the parser in action. 
+
+# Example usage 
 
 To use this library #include "parse.h" - the classes of this library are in namespace pparse.
 
-Each parser and parser combinator is an instantation of some template, lets look at this example grammar:
-
 ```
+    #include "parse.h"
+
 	using namespace pparse;
 
-	struct Int : PTokInt<1> {};
+```
+
+Lets dive into an example grammar:
+
+Each grammar rule is represented by the instantation of some template, lets look at this example grammar:
+The library provides template classes that can express a terminal or non terminal gramar rule.
+
+
+Terminal rules in this example:
+
+
+```
+TokInt<1>
+```
+
+terminal rule that consumes a positive integer (regex \d+). Note that the integer constant 1 will identify the node in the parse tree, this id is always the first argument to a template rule
+
+```
+PTok<3, CSTR1("*")> 
+```
+terminal rule that consumes a fixed string * - the string is one character in length, hence CSTR1("*").
+
+
+Non terminal rules in this example:
+
+```
+PAny<2, PTok<3,CSTR1("*")>, PTok<4,CSTR1("/")> >
+```
+
+PAny will match any one of the grammar rules provided as template arguments, in this examples these are either a fixed string * (expressed by PTok&lt;3,CSTR1("*")&gt;) or the fixed string / (expressed by PTok&lt4,CSTR1("/")&gt;) ; 
+
+
+```
+PSeq<10, PTok<11, CSTR1("-")>, TokInt<1> > 
+```
+
+PSeq will match the sequence of grammar rules provided as template arguments. in this example this is the fixed string - following by a positive integer. 
+
+```
+PRequireEof<Expr> 
+```
+
+PRequireEof will parse the argument type Expr, but will require it to be followed by whitespaces until the end of input.
+
+
+And example grammar for matching an arithmetic expression; note that you can give each production rule a name by deriving it from the template epression that stands for the right hand side of the production rule.
+
+```
+	struct Int : PTokInt<1> {}; // terminal rule: consumes an integer (\d+)
 
 	struct Expr;
 
-	struct Mult : PAny<2, PTok<3,CSTR1("*")>, PTok<4,CSTR1("/")> > {};
+	struct Mult : PAny<2, PTok<3,CSTR1("*")>, PTok<4,CSTR1("/")> > {};q
 
 	struct Add : PAny<4, PTok<5,CSTR1("+")>, PTok<6,CSTR1("-")> > {};
 
@@ -114,13 +163,13 @@ Note that a CharParser is wrapping the text stream object: this way it is possib
 
 # Bounded buffer
 
-This parser library has one optimization for the read ahea buffer: if one is parsing a top level rule then all input is discarded when the top level rule has been parsed:
+This parser library has one optimization for the read ahead buffer: if one is parsing a top level rule then all input is discarded when the top level rule has been parsed:
 In the previous example the following rule is a top level rule PAny<15, PSeq<16, MultExpr, Add, Expr >, MultExpr>   - it stands for a repetition of a choice of either one of: MultExpr or the nested sequence PSeq<16, MultExpr, Add, Expr >. For each instances after the first repetition has been parsed we can discard all input up to that point.
 This should keep the lookahead buffer bounded for most cases. (however the lookahead buffer will be reallocated if you really need a larger buffer).
 
-Actually this seems to be a novel solution - i haven't seen this solution in any other PEG based parser.
+# Parser rule reference
 
-# Parser reference
+a reference of all parsing rules provided by this library:
 
 
 ## Parser combinators
@@ -347,7 +396,7 @@ please note that this feature requires RTTI support enabled.
 
 
 
-# Tracing
+# Tracing the generated parser
 
 You can trace the running of the parser, this can be quite usefull for debugging purposes.
 To do you need to place #define  __PARSER_TRACE__ right before #include "parse.h"
