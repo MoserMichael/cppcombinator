@@ -242,6 +242,8 @@ The AST of the type Type is forwarded by this parser.
 Note that this is the only parser that doesn't backtrack if parsing of Type fails.
 This is done on purpose - if the nested parser is a repetition parser (like zero or more or one or more), then each instance of the nested parser will advance the input and discard the buffer upon parsing an instance of the term (see Bounded Buffer section)
 
+This rule does not generate a node in the parse tree, it therefore does not need an identifying constant as the first template argument
+
 
 Please note that the parser for this type must be declared after the declaration of the argument type Type. Forward declarations are not possible as the Ast type of the argument type is used as is.
 
