@@ -965,6 +965,13 @@ struct POnPreconditionFails {
 		}
 	
 #endif
+        static void init_collision_checker(ParserBase &base) {
+
+            if (base.colission_checker_ != nullptr) {
+                Type::init_collision_checker(base);
+            }
+        }
+
 
         template<typename ParserBase>
         static void init_collision_checker(ParserBase &base) {
@@ -1118,4 +1125,4 @@ struct PNotPredicate: PWithAndLookaheadImpl<false, PAlways<true>, Type> {
 
 } // namespace pparse
 
-
+    
