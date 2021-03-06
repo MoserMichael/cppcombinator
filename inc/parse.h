@@ -892,11 +892,11 @@ struct PStar : PRepeat<ruleId, Type, 0, 0> {
 };
 
 //
-//  PPlus - zero or more parser combinator
+//  PPlus - one or more parser combinator
 //
 
 template<RuleId ruleId, typename Type>
-struct PPlus : PRepeat<ruleId, Type, 0, 0> {
+struct PPlus : PRepeat<ruleId, Type, 1, 0> {
 };
 
 
